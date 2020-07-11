@@ -17,42 +17,27 @@
       rel="stylesheet"
     />
 
+    <link rel="stylesheet" href="./css/default.css" />
+
     <style>
-      /* Set font for all UIs */
-      * {
-        font-family: "Noto Sans KR", sans-serif, "Segoe UI", Arial, sans-serif;
-      }
-
-      html,
       body {
-        height: 100%;
+        background-color: #f6f8fa;
       }
 
-      html {
-        overflow: hidden;
+      #time {
+        color: #888;
       }
 
-      body:before {
-        content: "";
-        position: absolute;
-        display: block;
-        background: url(./img/background.jpg) center center fixed no-repeat;
-        background-size: cover;
-        z-index: -1;
-        filter: blur(5px);
-        transform: scale(1.1);
-        height: 100%;
-        width: 100%;
-
-        overflow: auto;
+      #video {
+        background-color: #000;
       }
 
-      #loginCard {
-        width: 400px;
+      #idArea {
+        color: #fff;
       }
 
-      .btn {
-        border: 1px solid #090;
+      th {
+        text-align: center;
       }
     </style>
 
@@ -73,43 +58,153 @@
     ></script>
   </head>
   <body>
-    <!-- Login -->
-    <div class="container d-flex h-100 justify-content-center">
-      <div class="align-self-center">
-        <div>
-          <div class="card p-3" id="loginCard">
-            <img src="./img/logo.png" class="w-75 align-self-center" />
-            <h5 class="mt-4 align-self-center">
-              한국도로공사 토공 다짐도 자동화 시스템
-            </h5>
-            <form action="/login" class="mt-4">
-              <div class="form-group">
-                <label for="loginUser">User ID</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="loginUser"
-                  placeholder="User ID"
-                />
-              </div>
-              <div class="form-group">
-                <label for="loginPassword">Password</label>
-                <input
-                  type="password"
-                  class="form-control"
-                  id="loginPassword"
-                  placeholder="Password"
-                />
-              </div>
-              <div class="d-flex">
-                <button type="submit" class="btn btn-success w-100">
-                  Login
-                </button>
-              </div>
-            </form>
-          </div>
+    <!-- Image and text -->
+    <nav class="navbar navbar-dark bg-dark justify-content-between">
+      <a class="navbar-brand" href="#">
+        <img
+          src="./img/logo.png"
+          height="20"
+          class="d-inline-block align-top mt-1"
+          alt=""
+        />
+        <span> 토공다짐도 자동화시스템</span>
+      </a>
+      <span id="time">TIME</span>
+      <span>
+        <span id="idArea" class="mr-2">You are logged in as USER</span>
+        <button class="btn btn-secondary" onclick="logout()">Logout</button>
+      </span>
+    </nav>
+    <div class="container mt-4">
+      <h2 class="mt-4">
+        영상 데이터
+      </h2>
+      <div class="d-flex justify-content-center">
+        <div class="embed-responsive embed-responsive-16by9 w-75" id="video">
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/FdiyYqoS8Tg"
+            frameborder="0"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
+      <h2 class="mt-4">
+        센서 데이터
+      </h2>
+      <table class="table">
+        <thead>
+          <tr id="tableHeader"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
     </div>
+
+    <script>
+      const time = $("#time");
+      time.text(new Date());
+      setInterval(() => {
+        time.text(new Date());
+      }, 1000);
+
+      function logout() {
+        location.href = "/logout?date=" + new Date().getMilliseconds();
+      }
+
+      const columns = [
+        "#",
+        "Date",
+        "낙하고(cm)",
+        "추 무게(kg)",
+        "포아손 비",
+        "지반반력계수(Mpa/m)",
+        "탄성계수(Mpa/m)",
+      ];
+
+      const data = [
+        [
+          new Date("2019-12-20 14:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.163,
+          0.734,
+          0.795,
+        ],
+        [
+          new Date("2019-12-20 09:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.163,
+          0.573,
+          0.876,
+        ],
+        [
+          new Date("2019-12-19 12:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.146,
+          0.145,
+          0.778,
+        ],
+        [
+          new Date("2019-12-18 22:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.124,
+          0.442,
+          0.568,
+        ],
+        [
+          new Date("2019-12-15 10:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.187,
+          0.423,
+          0.679,
+        ],
+        [
+          new Date("2019-12-12 13:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.166,
+          0.634,
+          0.875,
+        ],
+        [
+          new Date("2019-12-11 18:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.123,
+          0.356,
+          0.566,
+        ],
+        [
+          new Date("2019-12-09 09:00").toISOString().slice(0, 10),
+          35,
+          36,
+          0.198,
+          0.345,
+          0.877,
+        ],
+      ];
+
+      console.log(data);
+
+      $("#tableHeader").append(
+        columns.map((text) => $('<th scope="col"></th>').text(text))
+      );
+
+      $("#tableBody").append(
+        data.map((row, i) => {
+          let ret = `<tr><th scope="row">${i + 1}</th>`;
+          row.forEach((item) => (ret += `<th>${item}</th>`));
+          ret += "</tr>";
+          console.log(ret);
+          return $(ret);
+        })
+      );
+    </script>
   </body>
 </html>

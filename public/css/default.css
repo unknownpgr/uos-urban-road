@@ -1,0 +1,17 @@
+/* Set font for all UIs */
+* {
+  font-family: "Noto Sans KR", sans-serif, "Segoe UI", Arial, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  overflow: hidden;
+}
+
+body {
+  overflow: auto;
+}
