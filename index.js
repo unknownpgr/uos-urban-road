@@ -1,6 +1,7 @@
 // Import libraries
 const express = require("express");
 const session = require("express-session");
+const { spawn } = require("child_process");
 
 // Certify user
 function certify(id, pw) {
@@ -84,4 +85,9 @@ app.get("/logout", (req, res) => {
 });
 
 // Run server
-app.listen(8080, () => console.log("Server started"));
+app.listen(5000, () => {
+  console.log("Server started");
+  spawn("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe", [
+    "127.0.0.1:5000",
+  ]);
+});
