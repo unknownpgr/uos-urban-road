@@ -1,22 +1,20 @@
 // Import libraries
 const express = require("express");
 const session = require("express-session");
-const { spawn } = require("child_process");
+
+const allowedUsers = [
+  { id: "loginID", pw: "loginPW" },
+  { id: "ServerMaster", pw: "rnjswnsgh" },
+  { id: "road1", pw: "road1" },
+];
 
 // Certify user
 function certify(id, pw) {
-  const allowedUsers = [
-    { id: "loginID", pw: "loginPW" },
-    { id: "ServerMaster", pw: "rnjswnsgh" },
-  ];
-
   const allowd = allowedUsers.reduce(
     (pre, cur) => pre || (id == cur.id && pw == cur.pw),
     false
   );
-
-  console.log(id, pw, allowd);
-
+  console.log("Login attempt : ", id, allowd);
   return allowd;
 }
 
@@ -31,6 +29,8 @@ app.use(
     saveUninitialized: true,
   })
 );
+
+// Permission check
 app.use((req, res, next) => {
   const path = req.path;
 
@@ -53,6 +53,8 @@ app.use((req, res, next) => {
     else res.redirect("/login");
   }
 });
+
+// Static serve
 app.use(express.static(__dirname + "/public"));
 
 // Set default page
@@ -85,9 +87,6 @@ app.get("/logout", (req, res) => {
 });
 
 // Run server
-app.listen(5000, () => {
+app.listen(80, () => {
   console.log("Server started");
-  spawn("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe", [
-    "127.0.0.1:5000",
-  ]);
 });
