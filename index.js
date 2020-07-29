@@ -72,6 +72,7 @@ app.get("/login-submit", (req, res) => {
   const { id, pw } = req.query;
   if (certify(id, pw)) {
     req.session.loggedIn = true;
+    req.session.uesrname = id;
     res.redirect("/");
   } else res.redirect("back");
 });
@@ -85,6 +86,9 @@ app.get("/logout", (req, res) => {
   req.session.destroy();
   res.redirect("/login");
 });
+
+// API
+app.get("/api/username", (req, res) => res.send(req.session.uesrname));
 
 // Run server
 app.listen(80, () => {
