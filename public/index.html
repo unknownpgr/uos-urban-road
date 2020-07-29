@@ -127,20 +127,16 @@
           <h2 class="mt-4">
             영상 데이터
           </h2>
-          <div class="d-flex justify-content-center">
-            <div
-              class="embed-responsive embed-responsive-16by9 w-75"
-              id="video"
-            >
-              <iframe
-                width="560"
-                height="315"
-                src="https://www.youtube.com/embed/FdiyYqoS8Tg"
-                frameborder="0"
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-              ></iframe>
-            </div>
+          <div
+            class="d-flex justify-content-center"
+            style="
+              background-color: black;
+              height: 480px;
+              display: flex;
+              align-items: center;
+            "
+          >
+            <div style="color: white;">No video data available</div>
           </div>
         </div>
         <div
@@ -178,25 +174,19 @@
             현장지도
           </h2>
           <div class="d-flex justify-content-center">
-            <div
-              class="embed-responsive embed-responsive-16by9 w-75"
-              id="video"
-            >
-              <iframe
-                width="560"
-                height="315"
-                src="https://www.youtube.com/embed/FdiyYqoS8Tg"
-                frameborder="0"
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-              ></iframe>
-            </div>
+            <img src="./img/map.png" alt="" style="width: 100%;" />
           </div>
         </div>
       </div>
       <h2 class="mt-4">
         센서 데이터
       </h2>
+      <div class="input-group mt-3 mb-3" style="max-width: 30rem;">
+        <input type="text" value="2019-12-11" class="form-control" />
+        <div class="input-group-append">
+          <input type="button" value="검색" class="btn btn-outline-secondary" />
+        </div>
+      </div>
       <table class="table">
         <thead>
           <tr id="tableHeader"></tr>
