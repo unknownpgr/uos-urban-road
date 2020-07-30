@@ -38,6 +38,8 @@
 
       th {
         text-align: center;
+        max-width: 100%;
+        white-space: nowrap;
       }
     </style>
 
@@ -129,14 +131,21 @@
           </h2>
           <div
             class="d-flex justify-content-center"
-            style="
-              background-color: black;
-              height: 480px;
-              display: flex;
-              align-items: center;
-            "
+            style="display: flex; align-items: center;"
           >
-            <div style="color: white;">No video data available</div>
+            <div
+              class="embed-responsive embed-responsive-16by9 w-75"
+              id="video"
+            >
+              <iframe
+                width="560"
+                height="315"
+                src="https://www.youtube.com/embed/FdiyYqoS8Tg"
+                frameborder="0"
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
           </div>
         </div>
         <div
@@ -178,6 +187,8 @@
           </div>
         </div>
       </div>
+
+      <!-- Sensor data area -->
       <h2 class="mt-4">
         센서 데이터
       </h2>
@@ -187,20 +198,24 @@
           <input type="button" value="검색" class="btn btn-outline-secondary" />
         </div>
       </div>
-      <table class="table">
-        <thead>
-          <tr id="tableHeader"></tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+      <div style="width: 100%; overflow-x: auto; overflow-y: auto;">
+        <table class="table">
+          <thead>
+            <tr id="tableHeader"></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <script>
-      const time = $("#time");
-      time.text(new Date());
-      setInterval(() => {
-        time.text(new Date());
-      }, 1000);
+      // Use arrow function for scope
+      (() => {
+        const time = $("#time");
+        const timeSet = () => time.text((new Date() + "").substring(0, 24));
+        timeSet();
+        setInterval(timeSet, 1000);
+      })();
 
       function logout() {
         location.href = "/logout?date=" + new Date().getMilliseconds();
