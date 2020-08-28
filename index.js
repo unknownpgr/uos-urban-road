@@ -14,7 +14,7 @@ function certify(id, pw) {
     (pre, cur) => pre || (id == cur.id && pw == cur.pw),
     false
   );
-  console.log("Login attempt : ", id, allowd);
+  console.log("Login attempt : ", id, pw, allowd,new Date());
   return allowd;
 }
 
@@ -91,6 +91,7 @@ app.get("/logout", (req, res) => {
 app.get("/api/username", (req, res) => res.send(req.session.uesrname));
 
 // Run server
-app.listen(80, () => {
-  console.log("Server started");
+const PORT = 80
+app.listen(PORT, () => {
+  console.log("Server started at "+PORT);
 });
