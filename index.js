@@ -1,97 +1,59 @@
 // Import libraries
 const express = require("express");
-const session = require("express-session");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const loginSystem = require("./login");
 
-const allowedUsers = [
-  { id: "loginID", pw: "loginPW" },
-  { id: "ServerMaster", pw: "rnjswnsgh" },
-  { id: "road1", pw: "road1" },
-];
+const users = {
+  loginID: { pw: "loginPW" },
+  ServerMaster: { pw: "rnjswnsgh" },
+  road1: { pw: "road1" },
+};
 
-// Certify user
-function certify(id, pw) {
-  const allowd = allowedUsers.reduce(
-    (pre, cur) => pre || (id == cur.id && pw == cur.pw),
-    false
-  );
-  console.log("Login attempt : ", id, pw, allowd,new Date());
-  return allowd;
-}
+const { login, logout, auth } = loginSystem(users);
 
 // Create web server
 let app = express();
 
-// Set middleware
-app.use(
-  session({
-    secret: "THIS_IS_MY_SECRET_KEY:@!#$#$!@$%##@%$@$%#@!#^%&^*(*(&^%$#@!",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(bodyParser.json()); // Parse post body as json
+app.use(auth);
 
-// Permission check
-app.use((req, res, next) => {
-  const path = req.path;
-
-  const loginUnrequired =
-    path.startsWith("/css") ||
-    path.startsWith("/img") ||
-    path.startsWith("/js");
-
-  const isLoginProcess =
-    path.startsWith("/login") || path.startsWith("/login-submit");
-
-  const isLoggedIn = req.session.loggedIn;
-
-  if (loginUnrequired) next();
-  else if (isLoggedIn) {
-    if (isLoginProcess) res.redirect("/");
-    else next();
+// Set login submit
+app.post("/api/login", (req, res) => {
+  let { id, pw } = req.body;
+  let token = login(id, pw);
+  if (token) {
+    res.send({ status: "ok", token });
   } else {
-    if (isLoginProcess) next();
-    else res.redirect("/login");
+    res.send({ status: "err", err: "Failed to login" });
   }
 });
 
-// Static serve
-app.use(express.static(__dirname + "/public"));
-
-// Set default page
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
-});
-
-// Set login page
-app.get("/login", (req, res) => {
-  res.sendFile(__dirname + "/public/login.html");
-});
-
-// Set login submit
-app.get("/login-submit", (req, res) => {
-  const { id, pw } = req.query;
-  if (certify(id, pw)) {
-    req.session.loggedIn = true;
-    req.session.uesrname = id;
-    res.redirect("/");
-  } else res.redirect("back");
-});
-
 // Set logout
-app.get("/logout", (req, res) => {
-  // Since we are going to remove the session, there is no need to initialize it.
-  // However, because an error can occurs during session deletion, it is safer to initialize it before destroy.
-  console.log("Logged out!");
-  req.session.loggedIn = false;
-  req.session.destroy();
-  res.redirect("/login");
+app.post("/api/logout", (req, res) => {
+  if (logout(req.token)) {
+    res.send({ status: "ok" });
+  } else {
+    res.send({ status: "err", err: "Failed to logout" });
+  }
 });
 
-// API
-app.get("/api/username", (req, res) => res.send(req.session.uesrname));
+app.get("/api/username", (req, res) => {
+  if (req.user) {
+    res.send({ status: "ok", data: req.user.id });
+  } else {
+    res.send({ status: "err", err: "You are not logged in." });
+  }
+});
+
+// 404 Route
+app.get("*", function (req, res) {
+  res.status(404).send("This is 404 page.");
+});
 
 // Run server
-const PORT = 80
+const PORT = 3001;
 app.listen(PORT, () => {
-  console.log("Server started at "+PORT);
+  console.log("Server started at " + PORT);
 });

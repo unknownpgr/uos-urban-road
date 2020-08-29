@@ -1,4 +1,7 @@
-body:before {
+.background {
+  overflow: auto;
+  height: 100%;
+  width: 100%;
   content: "";
   position: absolute;
   display: block;
@@ -14,8 +17,8 @@ body:before {
 .login {
   height: 100%;
   display: flex;
-  justify-content: center;
   flex-direction: column;
+  justify-content: center;
 
   .loginCard {
     width: 400px;

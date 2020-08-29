@@ -5,20 +5,23 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import App from "./components/App/App";
 import Login from "./components/Login/Login";
 import * as serviceWorker from "./serviceWorker";
+import { AppProvider } from "./components/Context/AppContext";
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Router>
-      <Switch>
-        <Route exact path="/">
-          <App />
-        </Route>
-        <Route exact path="/login">
-          <Login />
-        </Route>
-      </Switch>
-    </Router>
-  </React.StrictMode>,
+  <AppProvider>
+    <React.StrictMode>
+      <Router>
+        <Switch>
+          <Route exact path="/">
+            <App />
+          </Route>
+          <Route exact path="/login">
+            <Login />
+          </Route>
+        </Switch>
+      </Router>
+    </React.StrictMode>
+  </AppProvider>,
   document.getElementById("root")
 );
 
