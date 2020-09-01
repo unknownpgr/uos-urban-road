@@ -3,6 +3,7 @@ import AppContext from "../Context/AppContext";
 import { Redirect, Route, withRouter, Link } from "react-router-dom";
 import axios from "axios";
 import { Navbar, Nav, Button, Container } from "react-bootstrap";
+import Viewer from "../Viewer/Viewer";
 
 class Clock extends React.Component {
   constructor(props) {
@@ -35,7 +36,7 @@ class App extends React.Component {
     this.state = {
       username: "",
       tab: "view",
-      maps: [],
+      cads: [],
     };
   }
 
@@ -53,13 +54,40 @@ class App extends React.Component {
         }
         // else
         this.setState({ username: res.data.data });
-        this.setState({ maps: ["Map1", "Map2", "Map3", "Map4", "Map5"] });
       });
+    axios.get("http://web-dev.iptime.org:3001/api/cads").then((res) => {
+      if (res.data) {
+        this.setState({ cads: res.data });
+      }
+    });
   }
 
   render() {
     // Go to login page if user is not logged in.
     if (!this.context.token) return <Redirect to="/login"></Redirect>;
+    let tabs = [];
+    let routes = [];
+    Object.keys(this.state.cads).forEach((cad, i) => {
+      // Make tabs
+      let tabName = cad.replace(".pdf", "");
+      let href = `/cads/${tabName}`;
+      let tab = (
+        <Nav.Item key={i}>
+          <Nav.Link as={Link} to={href} eventKey={href}>
+            {tabName}
+          </Nav.Link>
+        </Nav.Item>
+      );
+      tabs.push(tab);
+
+      // Make routes associated to tab
+      let route = (
+        <Route path={href} key={i}>
+          <Viewer file={cad} data={this.state.cads[cad]}></Viewer>
+        </Route>
+      );
+      routes.push(route);
+    });
     return (
       <>
         <Navbar bg="dark" variant="dark" className="justify-content-between">
@@ -98,25 +126,9 @@ class App extends React.Component {
                 실시간 뷰
               </Nav.Link>
             </Nav.Item>
-            {this.state.maps.map((map, i) => (
-              <Nav.Item key={i}>
-                <Nav.Link
-                  as={Link}
-                  to={`/maps/${map}`}
-                  eventKey={`/maps/${map}`}
-                >
-                  {map}
-                </Nav.Link>
-              </Nav.Item>
-            ))}
+            {tabs}
           </Nav>
-          <Route path="/maps">
-            {this.state.maps.map((map, i) => (
-              <Route path={`/maps/${map}`} key={i}>
-                {map}
-              </Route>
-            ))}
-          </Route>
+          <Route path="/cads">{routes}</Route>
           <Route exact path="/">
             VIEW
           </Route>

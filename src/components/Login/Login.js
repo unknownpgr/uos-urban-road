@@ -81,7 +81,7 @@ class Login extends React.Component {
               <Form onSubmit={this.handleLogin}>
                 {/* Error alert message */}
                 {this.state.err ? (
-                  <Alert variant={"danger"}>{this.state.err}</Alert>
+                  <Alert variant="danger">{this.state.err}</Alert>
                 ) : undefined}
 
                 {/* ID input field */}

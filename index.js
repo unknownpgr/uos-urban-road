@@ -47,6 +47,10 @@ app.get("/api/username", (req, res) => {
   }
 });
 
+app.get("/api/cads", (req, res) => {
+  res.sendFile(__dirname + "/public/cad_config.json");
+});
+
 // 404 Route
 app.get("*", function (req, res) {
   res.status(404).send("This is 404 page.");
