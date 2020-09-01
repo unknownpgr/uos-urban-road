@@ -43,7 +43,7 @@ app.get("/api/username", (req, res) => {
   if (req.user) {
     res.send({ status: "ok", data: req.user.id });
   } else {
-    res.send({ status: "err", err: "You are not logged in." });
+    res.send({ status: "err", data: "Dummy", err: "You are not logged in." });
   }
 });
 
