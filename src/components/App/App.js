@@ -4,6 +4,28 @@ import { Redirect, Route, withRouter, Link } from "react-router-dom";
 import axios from "axios";
 import { Navbar, Nav, Button, Container } from "react-bootstrap";
 
+class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { time: (new Date() + "").substring(0, 24) };
+    this.intervalKey = 0;
+  }
+
+  componentDidMount() {
+    this.intervalKey = setInterval(() =>
+      this.setState({ time: (new Date() + "").substring(0, 24) })
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalKey);
+  }
+
+  render() {
+    return this.state.time;
+  }
+}
+
 class App extends React.Component {
   static contextType = AppContext;
 
@@ -14,9 +36,7 @@ class App extends React.Component {
       username: "",
       tab: "view",
       maps: [],
-      time: (new Date() + "").substring(0, 24),
     };
-    this.timerKey = 0;
   }
 
   componentDidMount() {
@@ -35,13 +55,6 @@ class App extends React.Component {
         this.setState({ username: res.data.data });
         this.setState({ maps: ["Map1", "Map2", "Map3", "Map4", "Map5"] });
       });
-    this.timerKey = setInterval(() => {
-      this.setState({ time: (new Date() + "").substring(0, 24) });
-    }, 1000);
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.timerKey);
   }
 
   render() {
@@ -61,7 +74,9 @@ class App extends React.Component {
             </Navbar.Brand>
             <Navbar.Brand>토공다짐도 자동화시스템</Navbar.Brand>
           </span>
-          <Navbar.Text id="time">{this.state.time}</Navbar.Text>
+          <Navbar.Text>
+            <Clock></Clock>
+          </Navbar.Text>
           <span>
             <Navbar.Text className="mr-2">
               You are logged in as {this.state.username}
