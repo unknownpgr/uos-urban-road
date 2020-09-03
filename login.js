@@ -23,9 +23,7 @@ function loginSystem(users, expireTime = 1000 * 60 * 60, tokenKey = "token") {
             let token = create();
             session[token] = row;
             resolve(token);
-          } else {
-            reject();
-          }
+          } else reject();
         }
       );
     });
@@ -46,9 +44,9 @@ function loginSystem(users, expireTime = 1000 * 60 * 60, tokenKey = "token") {
       req.user = session[token];
     } else {
       session[token] = undefined;
-      delete session[token];
       req.user = undefined;
       req.token = undefined;
+      delete session[token];
     }
     next();
   }
