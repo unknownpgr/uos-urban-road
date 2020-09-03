@@ -32,6 +32,8 @@ app.use(auth);
  * 429 : Too many requests
  *
  * Return {} to client when no response required with status code 200.
+ * See link below for more information about RESTful API design.
+ * https://sanghaklee.tistory.com/57
  */
 
 // Set login submit

@@ -43,18 +43,24 @@ class App extends React.Component {
   componentDidMount() {
     let tab = this.props.location.pathname;
     this.setState({ tab });
+
+    // Get username
     axios
       .get(
         "http://web-dev.iptime.org:3001/api/username?token=" +
           this.context.token
       )
       .then((res) => {
-        if (res.data.status !== "ok") {
-          // this.context.setToken(undefined);
-        }
-        // else
         this.setState({ username: res.data.data });
+      })
+      .catch((err) => {
+        console.log(err);
+        // this.context.setToken(undefined);
+        // This code is just for debugging.
+        this.setState({ username: err.response.data.data });
       });
+
+    // Get cad file list
     axios.get("http://web-dev.iptime.org:3001/api/cads").then((res) => {
       if (res.data) {
         this.setState({ cads: res.data });
