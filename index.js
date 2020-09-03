@@ -41,36 +41,33 @@ app.post("/api/login", async (req, res) => {
   let { id, pw } = req.body;
   try {
     let token = await login(id, pw);
-    if (token) {
-      res.send({ token });
-      return;
-    }
-  } catch {}
-  res.status(404).send({ err: "Failed to login" });
+    res.send({ token });
+    if (!token) console.err("Login token did not generated.");
+  } catch {
+    res.status(404).send({ err: "Failed to login" });
+  }
 });
 
+// Logout
 app.post("/api/logout", (req, res) => {
-  if (logout(req.token)) {
-    res.send({});
-  } else {
-    res.status(401).send({ err: "Failed to logout" });
-  }
+  if (logout(req.token)) res.send({});
+  else res.status(401).send({ err: "Failed to logout" });
 });
 
+// Get username
 app.get("/api/username", (req, res) => {
-  if (req.user) {
-    res.send({ data: req.user.id });
-  } else {
-    res.status(401).send({ data: "Dummy", err: "You are not logged in." });
-  }
+  if (req.user) res.send({ data: req.user.id });
+  else res.status(401).send({ data: "Dummy", err: "You are not logged in." });
 });
 
+// Get CAD files metadata
 app.get("/api/cads", (req, res) => {
   res.sendFile(__dirname + "/public/cad_config.json");
 });
 
+// Set pivot of an CAD file
 app.post("/api/pivot", (req, res) => {
-  console.log(req.user, req.body);
+  // TODO : Connecto to DB
   res.status(201).send({});
 });
 
