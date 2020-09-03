@@ -18,20 +18,20 @@ class Login extends React.Component {
       isLoading: false,
     };
 
-    this.handleID = this.handleID.bind(this);
-    this.handlePw = this.handlePw.bind(this);
-    this.handleLogin = this.handleLogin.bind(this);
+    this.onChangeID = this.onChangeID.bind(this);
+    this.onChangePw = this.onChangePw.bind(this);
+    this.onLogin = this.onLogin.bind(this);
   }
 
-  handleID(event) {
+  onChangeID(event) {
     this.setState({ id: event.target.value });
   }
 
-  handlePw(event) {
+  onChangePw(event) {
     this.setState({ pw: event.target.value });
   }
 
-  async handleLogin(e) {
+  async onLogin(e) {
     e.preventDefault();
     // Check ID, password length
     if (this.state.id === "") {
@@ -44,21 +44,24 @@ class Login extends React.Component {
     }
 
     // Do login process
-    this.setState({ isLoading: true });
-    let host = "http://web-dev.iptime.org:3001";
-    let res = await axios.post(host + "/api/login", {
-      id: this.state.id,
-      pw: this.state.pw,
-    });
-    let token = res.data.token;
-    if (token) {
-      // If login is successful, set a token and redirect to the main page.
-      this.context.setToken(token);
-      // The redirection occurs immediately after this code is executed.
-      // Therefore, component state update after this code will make warning.
-      this.setState({ redirect: <Redirect to="/"></Redirect> });
-    } else {
-      // If login fails, show error message.
+    try {
+      this.setState({ isLoading: true });
+      let host = "http://web-dev.iptime.org:3001";
+      let res = await axios.post(host + "/api/login", {
+        id: this.state.id,
+        pw: this.state.pw,
+      });
+      let token = res.data.token;
+      if (token) {
+        // If login is successful, set a token and redirect to the main page.
+        this.context.setToken(token);
+        // The redirection occurs immediately after this code is executed.
+        // Therefore, component state update after this code will make warning.
+        this.setState({ redirect: <Redirect to="/"></Redirect> });
+      } else {
+        alert("Serverside error occurred.");
+      }
+    } catch {
       this.setState({ err: "계정이 존재하지 않거나 비밀번호가 틀렸습니다." });
       this.setState({ isLoading: false });
     }
@@ -78,7 +81,7 @@ class Login extends React.Component {
               <Card.Title className="mt-4">
                 한국도로공사 토공 다짐도 자동화 시스템
               </Card.Title>
-              <Form onSubmit={this.handleLogin}>
+              <Form onSubmit={this.onLogin}>
                 {/* Error alert message */}
                 {this.state.err ? (
                   <Alert variant="danger">{this.state.err}</Alert>
@@ -90,7 +93,7 @@ class Login extends React.Component {
                   <Form.Control
                     type="text"
                     value={this.state.id}
-                    onChange={this.handleID}
+                    onChange={this.onChangeID}
                     disabled={this.state.isLoading}
                   ></Form.Control>
                 </Form.Group>
@@ -101,7 +104,7 @@ class Login extends React.Component {
                   <Form.Control
                     type="password"
                     value={this.state.pw}
-                    onChange={this.handlePw}
+                    onChange={this.onChangePw}
                     disabled={this.state.isLoading}
                   ></Form.Control>
                 </Form.Group>

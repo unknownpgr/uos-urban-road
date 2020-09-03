@@ -15,7 +15,8 @@ function px2cnv(cnv, x, y) {
 
 function ClickMenu(props) {
   return (
-    <div
+    <ButtonGroup
+      vertical
       className="clickMenu"
       style={{
         display: props.hidden ? "none" : undefined,
@@ -23,14 +24,12 @@ function ClickMenu(props) {
         top: props.y,
       }}
     >
-      <ButtonGroup vertical>
-        {props.menu?.map((menu, i) => (
-          <Button onClick={menu.handleClick} key={i}>
-            {menu.text}
-          </Button>
-        ))}
-      </ButtonGroup>
-    </div>
+      {props.menu?.map((menu, i) => (
+        <Button onClick={menu.onClick} key={i}>
+          {menu.text}
+        </Button>
+      ))}
+    </ButtonGroup>
   );
 }
 
@@ -62,8 +61,8 @@ function PositionInputForm(props) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={props.handleClose}>
-          닫기
+        <Button variant="primary" onClick={props.onSave}>
+          저장
         </Button>
       </Modal.Footer>
     </Modal>
@@ -94,7 +93,7 @@ class Viewer extends React.Component {
     this.onMouseLeftClick = this.onMouseLeftClick.bind(this);
     this.onMouseRightClick = this.onMouseRightClick.bind(this);
     this.onSetPoint = this.onSetPoint.bind(this);
-    this.onInputClose = this.onInputClose.bind(this);
+    this.onInputSave = this.onInputSave.bind(this);
     this.state = {
       isLoading: true,
       isMenuVisible: false,
@@ -175,9 +174,10 @@ class Viewer extends React.Component {
     });
   }
 
-  onInputClose() {
+  onInputSave() {
     this.setState({ isInputVisible: false });
     axios.post("http://web-dev.iptime.org:3001/api/pivot", {
+      img: this.props.data.img,
       pax: this.state.pax,
       pay: this.state.pay,
       pbx: this.state.pbx,
@@ -209,7 +209,7 @@ class Viewer extends React.Component {
 
   render() {
     let menu = this.points.map((point) => ({
-      handleClick: (e) => this.onSetPoint(e, point),
+      onClick: (e) => this.onSetPoint(e, point),
       ...point,
     }));
     return (
@@ -218,7 +218,7 @@ class Viewer extends React.Component {
           text={this.state.selectedPoint.text}
           show={this.state.isInputVisible}
           vars={this.state.selectedVars.map((x) => this.vars[x])}
-          handleClose={this.onInputClose}
+          onSave={this.onInputSave}
         ></PositionInputForm>
         <ClickMenu
           hidden={!this.state.isMenuVisible}
