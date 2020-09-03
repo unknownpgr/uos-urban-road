@@ -1,4 +1,7 @@
 let tokenSystem = require("./token");
+const sqlite3 = require("sqlite3");
+
+let db = new sqlite3.Database("database.db");
 
 /**
  *
@@ -10,12 +13,22 @@ function loginSystem(users, expireTime = 1000 * 60 * 60, tokenKey = "token") {
   let { create, check, expire } = tokenSystem(expireTime, tokenKey);
   let session = {};
   function login(id, pw) {
-    if (!users[id]) return false;
-    if (users[id].pw !== pw) return false;
-    let token = create();
-    users[id].id = id;
-    session[token] = users[id];
-    return token;
+    return new Promise((resolve, reject) => {
+      db.get(
+        "SELECT id FROM users WHERE id = ? AND pw = ?",
+        [id, pw],
+        (err, row) => {
+          if (err) reject(err);
+          else if (row) {
+            let token = create();
+            session[token] = row;
+            resolve(token);
+          } else {
+            reject();
+          }
+        }
+      );
+    });
   }
 
   function logout(token) {
