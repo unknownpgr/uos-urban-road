@@ -36,6 +36,8 @@ app.use(auth);
  * https://sanghaklee.tistory.com/57
  */
 
+app.use(express.static("./build"))
+
 // Set login submit
 app.post("/api/login", async (req, res) => {
   let { id, pw } = req.body;
@@ -77,7 +79,7 @@ app.get("*", function (req, res) {
 });
 
 // Run server
-const PORT = 3001;
+const PORT = 80;
 app.listen(PORT, () => {
   console.log("Server started at " + PORT);
 });
