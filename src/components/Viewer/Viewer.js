@@ -176,7 +176,7 @@ class Viewer extends React.Component {
 
   onInputSave() {
     this.setState({ isInputVisible: false });
-    axios.post("http://web-dev.iptime.org:3001/api/pivot", {
+    axios.post("/api/pivot", {
       img: this.props.data.img,
       pax: this.state.pax,
       pay: this.state.pay,

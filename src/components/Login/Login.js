@@ -46,7 +46,7 @@ class Login extends React.Component {
     // Do login process
     try {
       this.setState({ isLoading: true });
-      let host = "http://web-dev.iptime.org:3001";
+      let host = "";
       let res = await axios.post(host + "/api/login", {
         id: this.state.id,
         pw: this.state.pw,

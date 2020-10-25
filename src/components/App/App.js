@@ -47,8 +47,8 @@ class App extends React.Component {
     // Get username
     axios
       .get(
-        "http://web-dev.iptime.org:3001/api/username?token=" +
-          this.context.token
+        "/api/username?token=" +
+        this.context.token
       )
       .then((res) => {
         this.setState({ username: res.data.data });
@@ -61,7 +61,7 @@ class App extends React.Component {
       });
 
     // Get cad file list
-    axios.get("http://web-dev.iptime.org:3001/api/cads").then((res) => {
+    axios.get("/api/cads").then((res) => {
       if (res.data) {
         this.setState({ cads: res.data });
       }
