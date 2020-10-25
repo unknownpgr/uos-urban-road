@@ -79,7 +79,7 @@ app.get("*", function (req, res) {
 });
 
 // Run server
-const PORT = 80;
+const PORT = 1501;
 app.listen(PORT, () => {
   console.log("Server started at " + PORT);
 });
