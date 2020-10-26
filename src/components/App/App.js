@@ -38,6 +38,8 @@ class App extends React.Component {
       tab: "view",
       cads: [],
     };
+
+    this.logout = this.logout.bind(this);
   }
 
   componentDidMount() {
@@ -45,14 +47,8 @@ class App extends React.Component {
     this.setState({ tab });
 
     // Get username
-    axios
-      .get(
-        "/road/api/username?token=" +
-        this.context.token
-      )
-      .then((res) => {
-        this.setState({ username: res.data.data });
-      })
+    axios.get("/road/api/username?token=" + this.context.token)
+      .then((res) => { this.setState({ username: res.data.data }); })
       .catch((err) => {
         console.log(err);
         this.context.setToken(undefined);
@@ -61,11 +57,18 @@ class App extends React.Component {
       });
 
     // Get cad file list
-    axios.get("/road/api/cads").then((res) => {
-      if (res.data) {
-        this.setState({ cads: res.data });
-      }
-    });
+    axios.get("/road/api/cads")
+      .then((res) => {
+        if (res.data) { this.setState({ cads: res.data }); }
+      });
+  }
+
+  logout() {
+    axios.post("/road/api/logout?token=" + this.context.token)
+      .then(() => { this.context.setToken(undefined) })
+      .catch(err => {
+        console.log(err)
+      })
   }
 
   render() {
@@ -115,7 +118,7 @@ class App extends React.Component {
             <Navbar.Text className="mr-2">
               You are logged in as {this.state.username}
             </Navbar.Text>
-            <Button className="btn-secondary">Logout</Button>
+            <Button className="btn-secondary" onClick={this.logout}>Logout</Button>
           </span>
         </Navbar>
 
