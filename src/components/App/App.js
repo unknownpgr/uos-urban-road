@@ -47,7 +47,7 @@ class App extends React.Component {
     // Get username
     axios
       .get(
-        "/api/username?token=" +
+        "/road/api/username?token=" +
         this.context.token
       )
       .then((res) => {
@@ -61,7 +61,7 @@ class App extends React.Component {
       });
 
     // Get cad file list
-    axios.get("/api/cads").then((res) => {
+    axios.get("/road/api/cads").then((res) => {
       if (res.data) {
         this.setState({ cads: res.data });
       }
@@ -70,13 +70,13 @@ class App extends React.Component {
 
   render() {
     // Go to login page if user is not logged in.
-    if (!this.context.token) return <Redirect to="/login"></Redirect>;
+    if (!this.context.token) return <Redirect to="/road/login"></Redirect>;
     let tabs = [];
     let routes = [];
     Object.keys(this.state.cads).forEach((cad, i) => {
       // Make tabs
       let tabName = cad.replace(".pdf", "");
-      let href = `/cads/${tabName}`;
+      let href = `/road/cads/${tabName}`;
       let tab = (
         <Nav.Item key={i}>
           <Nav.Link as={Link} to={href} eventKey={href}>
@@ -100,7 +100,7 @@ class App extends React.Component {
           <span>
             <Navbar.Brand href="https://www.ex.co.kr/" target="_blank">
               <img
-                src="/img/logo.png"
+                src="/road/img/logo.png"
                 height="20"
                 className="d-inline-block align-top mt-1"
                 alt=""
@@ -128,14 +128,14 @@ class App extends React.Component {
             }}
           >
             <Nav.Item>
-              <Nav.Link as={Link} to="/" eventKey="/">
+              <Nav.Link as={Link} to="/road" eventKey="/road">
                 실시간 뷰
               </Nav.Link>
             </Nav.Item>
             {tabs}
           </Nav>
-          <Route path="/cads">{routes}</Route>
-          <Route exact path="/">
+          <Route path="/road/cads">{routes}</Route>
+          <Route exact path="/road">
             VIEW
           </Route>
         </Container>

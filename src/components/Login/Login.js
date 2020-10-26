@@ -47,7 +47,7 @@ class Login extends React.Component {
     try {
       this.setState({ isLoading: true });
       let host = "";
-      let res = await axios.post(host + "/api/login", {
+      let res = await axios.post(host + "/road/api/login", {
         id: this.state.id,
         pw: this.state.pw,
       });
@@ -57,7 +57,7 @@ class Login extends React.Component {
         this.context.setToken(token);
         // The redirection occurs immediately after this code is executed.
         // Therefore, component state update after this code will make warning.
-        this.setState({ redirect: <Redirect to="/"></Redirect> });
+        this.setState({ redirect: <Redirect to="/road/"></Redirect> });
       } else {
         alert("Serverside error occurred.");
       }
@@ -77,7 +77,7 @@ class Login extends React.Component {
           {/* Main card */}
           <Card className="loginCard">
             <Card.Body>
-              <img src="./img/logo.png" className="w-75" alt="한국도로공사" />
+              <img src="/road/img/logo.png" className="w-75" alt="한국도로공사" />
               <Card.Title className="mt-4">
                 한국도로공사 토공 다짐도 자동화 시스템
               </Card.Title>

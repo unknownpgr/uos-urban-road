@@ -176,7 +176,7 @@ class Viewer extends React.Component {
 
   onInputSave() {
     this.setState({ isInputVisible: false });
-    axios.post("/api/pivot", {
+    axios.post("/road/api/pivot", {
       img: this.props.data.img,
       pax: this.state.pax,
       pay: this.state.pay,
@@ -192,7 +192,7 @@ class Viewer extends React.Component {
     try {
       this.ctx = this.cnv.getContext("2d");
       let meta = this.props.data;
-      let fileFullPath = "/img/cad/" + meta.img;
+      let fileFullPath = "/road/img/cad/" + meta.img;
       this.cnv.width = meta.w;
       this.cnv.height = meta.h;
       let img = new Image();
