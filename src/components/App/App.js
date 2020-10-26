@@ -55,9 +55,9 @@ class App extends React.Component {
       })
       .catch((err) => {
         console.log(err);
-        // this.context.setToken(undefined);
+        this.context.setToken(undefined);
         // This code is just for debugging.
-        this.setState({ username: err.response.data.data });
+        // this.setState({ username: err.response.data.data });
       });
 
     // Get cad file list
