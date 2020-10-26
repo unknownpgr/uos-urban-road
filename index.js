@@ -36,7 +36,10 @@ app.use(auth);
  * https://sanghaklee.tistory.com/57
  */
 
-app.use(express.static("./build"))
+app.use((req, res, next) => {
+  console.log(new Date(), req.path)
+  next()
+})
 
 // Set login submit
 app.post("/api/login", async (req, res) => {
@@ -75,7 +78,7 @@ app.post("/api/pivot", (req, res) => {
 
 // 404 Route
 app.get("*", function (req, res) {
-  res.status(404).send("This is 404 page.");
+  res.status(404).send("Unknown api detected.");
 });
 
 // Run server
