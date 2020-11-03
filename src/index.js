@@ -12,7 +12,7 @@ ReactDOM.render(
     <React.StrictMode>
       <Router>
         <Switch>
-          <Route exact path="/road/login">
+          <Route exact path="/login">
             <Login />
           </Route>
           <Route path="/">
