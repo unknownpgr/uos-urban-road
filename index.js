@@ -73,6 +73,7 @@ app.get("/api/cads", (req, res) => {
 // Set pivot of an CAD file
 app.post("/api/pivot", (req, res) => {
   // TODO : Connecto to DB
+  console.log(req.body)
   res.status(201).send({});
 });
 

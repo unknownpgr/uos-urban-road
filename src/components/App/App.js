@@ -102,7 +102,7 @@ class App extends React.Component {
     });
 
     return (
-      <div class="app">
+      <div className="app">
         {/* Top bar */}
         <Navbar bg="dark" variant="dark" className="justify-content-between">
           <span>

@@ -69,10 +69,9 @@ function PositionInputForm(props) {
   );
 }
 
-function getVariable(self, varName, label, type = "text", defaultValue = 0) {
+function getVariable(self, varName, label, defaultValue = 0) {
   if (self.state[varName] === undefined) self.state[varName] = defaultValue;
   return {
-    type,
     label,
     value: () => self.state[varName],
     setValue: (event) => {
@@ -95,14 +94,15 @@ class CadViewer extends React.Component {
     this.onSetPoint = this.onSetPoint.bind(this);
     this.onInputSave = this.onInputSave.bind(this);
     this.state = {
-      isLoading: true,
+      alertShow: true,
+      alertStr: "Loading CAD image...",
+      alertState: "primary",
       isMenuVisible: false,
       isInputVisible: false,
       selectedPoint: {},
       selectedVars: [],
       menuX: 0,
       menuY: 0,
-      err: false,
     };
     this.points = [
       { vars: ["pax", "pay"], text: "포인트 평면도 A" },
@@ -111,17 +111,16 @@ class CadViewer extends React.Component {
       { vars: ["pdy"], text: "포인트 측면도 B" },
     ];
     this.vars = {
-      pax: getVariable(this, "pax", "X", "number"),
-      pay: getVariable(this, "pay", "Y", "number"),
-      pbx: getVariable(this, "pbx", "X", "number"),
-      pby: getVariable(this, "pby", "Y", "number"),
-      pcy: getVariable(this, "pcy", "Height", "number"),
-      pdy: getVariable(this, "pdy", "Height", "number"),
+      pax: getVariable(this, "pax", "X"),
+      pay: getVariable(this, "pay", "Y"),
+      pbx: getVariable(this, "pbx", "X"),
+      pby: getVariable(this, "pby", "Y"),
+      pcy: getVariable(this, "pcy", "Height"),
+      pdy: getVariable(this, "pdy", "Height"),
     };
-    this.x = 0;
-    this.y = 0;
+    this.mouseX = 0;
+    this.mouseY = 0;
   }
-
   onMouseLeftClick(event) {
     if (event.button !== 0) return;
     event.preventDefault();
@@ -130,10 +129,14 @@ class CadViewer extends React.Component {
 
   onMouseRightClick(event) {
     event.preventDefault();
+    let rect = event.target.parentElement.parentElement.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+
     this.setState({
       isMenuVisible: !this.state.isMenuVisible,
-      menuX: event.clientX,
-      menuY: event.clientY,
+      menuX: x,
+      menuY: y,
     });
   }
 
@@ -147,8 +150,8 @@ class CadViewer extends React.Component {
 
     // Get mouse position
     let [x, y, scaleX] = px2cnv(this.cnv, event.clientX, event.clientY);
-    this.x = x;
-    this.y = y;
+    this.mouseX = x;
+    this.mouseY = y;
 
     // Draw cursor(+)
     ctx.beginPath();
@@ -199,7 +202,7 @@ class CadViewer extends React.Component {
       img.onload = () => {
         this.cad = img;
         this.ctx.drawImage(img, 0, 0);
-        this.setState({ isLoading: false });
+        this.setState({ alertShow: false });
       };
       img.src = fileFullPath;
     } catch {
@@ -214,16 +217,23 @@ class CadViewer extends React.Component {
     }));
     return (
       <div className="cadViewer">
-        {this.state.isLoading ? (
-          <Alert
-            variant={this.state.err ? "danger" : "primary"}
-            className="alert m-2"
-          >
-            {this.state.err
-              ? "An error occurred while loading the CAD file."
-              : "Loading image..."}
-          </Alert>
-        ) : undefined}
+        <ClickMenu
+          hidden={!this.state.isMenuVisible}
+          x={this.state.menuX}
+          y={this.state.menuY}
+          menu={menu}
+        ></ClickMenu>
+        <PositionInputForm
+          text={this.state.selectedPoint.text}
+          show={this.state.isInputVisible}
+          vars={this.state.selectedVars.map((x) => this.vars[x])}
+          onSave={this.onInputSave}
+        ></PositionInputForm>
+        <Alert
+          style={{ opacity: this.state.alertShow ? 0.9 : 0 }}
+          variant={this.state.alertState}
+          className="alert m-2"
+        >{this.state.alertStr}</Alert>
         <div className="viewer">
           <canvas
             ref={(cnv) => {
@@ -233,27 +243,18 @@ class CadViewer extends React.Component {
             onMouseMove={this.onMouseMove}
             onClick={this.onMouseLeftClick}
             onContextMenu={this.onMouseRightClick}
-          ></canvas>
-          <PositionInputForm
-            text={this.state.selectedPoint.text}
-            show={this.state.isInputVisible}
-            vars={this.state.selectedVars.map((x) => this.vars[x])}
-            onSave={this.onInputSave}
-          ></PositionInputForm>
-          <ClickMenu
-            hidden={!this.state.isMenuVisible}
-            x={this.state.menuX}
-            y={this.state.menuY}
-            menu={menu}
-          ></ClickMenu>
+          >
+          </canvas>
         </div>
-        <div class="table">
+        <div className="table">
           <table>
             <thead>
-              <th scope='col'>#</th>
-              <th scope='col'>MaxLoad(kN)</th>
-              <th scope='col'>MaxDis(mm)</th>
-              <th scope='col'>E-Inverse</th>
+              <tr>
+                <th scope='col'>#</th>
+                <th scope='col'>MaxLoad(kN)</th>
+                <th scope='col'>MaxDis(mm)</th>
+                <th scope='col'>E-Inverse</th>
+              </tr>
             </thead>
           </table>
         </div>
