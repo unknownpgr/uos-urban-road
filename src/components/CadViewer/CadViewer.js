@@ -138,7 +138,7 @@ class CadViewer extends React.Component {
   }
 
   onMouseMove(event) {
-    if (!(this.ctx && this.cnv && this.cad && this.cad)) return;
+    if (!(this.ctx && this.cnv && this.cad)) return;
     let ctx = this.ctx;
 
     // Draw CAD image
@@ -199,9 +199,9 @@ class CadViewer extends React.Component {
       img.onload = () => {
         this.cad = img;
         this.ctx.drawImage(img, 0, 0);
+        this.setState({ isLoading: false });
       };
       img.src = fileFullPath;
-      this.setState({ isLoading: false });
     } catch {
       this.setState({ err: true });
     }
@@ -213,39 +213,51 @@ class CadViewer extends React.Component {
       ...point,
     }));
     return (
-      <>
-        <PositionInputForm
-          text={this.state.selectedPoint.text}
-          show={this.state.isInputVisible}
-          vars={this.state.selectedVars.map((x) => this.vars[x])}
-          onSave={this.onInputSave}
-        ></PositionInputForm>
-        <ClickMenu
-          hidden={!this.state.isMenuVisible}
-          x={this.state.menuX}
-          y={this.state.menuY}
-          menu={menu}
-        ></ClickMenu>
+      <div className="cadViewer">
         {this.state.isLoading ? (
           <Alert
             variant={this.state.err ? "danger" : "primary"}
-            className="m-2"
+            className="alert m-2"
           >
             {this.state.err
               ? "An error occurred while loading the CAD file."
               : "Loading image..."}
           </Alert>
         ) : undefined}
-        <canvas
-          ref={(cnv) => {
-            this.cnv = cnv;
-          }}
-          className="w-100"
-          onMouseMove={this.onMouseMove}
-          onClick={this.onMouseLeftClick}
-          onContextMenu={this.onMouseRightClick}
-        ></canvas>
-      </>
+        <div className="viewer">
+          <canvas
+            ref={(cnv) => {
+              this.cnv = cnv;
+            }}
+            className="w-100"
+            onMouseMove={this.onMouseMove}
+            onClick={this.onMouseLeftClick}
+            onContextMenu={this.onMouseRightClick}
+          ></canvas>
+          <PositionInputForm
+            text={this.state.selectedPoint.text}
+            show={this.state.isInputVisible}
+            vars={this.state.selectedVars.map((x) => this.vars[x])}
+            onSave={this.onInputSave}
+          ></PositionInputForm>
+          <ClickMenu
+            hidden={!this.state.isMenuVisible}
+            x={this.state.menuX}
+            y={this.state.menuY}
+            menu={menu}
+          ></ClickMenu>
+        </div>
+        <div class="table">
+          <table>
+            <thead>
+              <th scope='col'>#</th>
+              <th scope='col'>MaxLoad(kN)</th>
+              <th scope='col'>MaxDis(mm)</th>
+              <th scope='col'>E-Inverse</th>
+            </thead>
+          </table>
+        </div>
+      </div>
     );
   }
 }

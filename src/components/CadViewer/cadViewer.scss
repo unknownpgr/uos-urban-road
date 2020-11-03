@@ -1,3 +1,42 @@
-.clickMenu {
-  position: absolute;
+.cadViewer {
+  .alert {
+    position: absolute;
+    width: 100%;
+  }
+
+  .clickMenu {
+    position: absolute;
+  }
+
+  .table {
+    flex: 1;
+  }
+
+  table {
+    width: 100%;
+  }
+
+  @media (min-width: 1241px) {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    padding: 32px 0;
+
+    .viewer {
+      height: 100%;
+      overflow: auto;
+      width: 60%;
+    }
+  }
+
+  @media (max-width: 1240px) {
+    height: 100%;
+    flex-direction: column;
+    overflow: scroll;
+
+    .viewer {
+      width: 100%;
+      height: fit-content;
+    }
+  }
 }

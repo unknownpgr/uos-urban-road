@@ -5,6 +5,7 @@ import axios from "axios";
 import { Navbar, Nav, Button, Container } from "react-bootstrap";
 import CadViewer from "../CadViewer/CadViewer";
 import VideoViewer from "../VideoViewer/VideoViewer";
+import "./app.scss"
 
 class Clock extends React.Component {
   constructor(props) {
@@ -101,7 +102,8 @@ class App extends React.Component {
     });
 
     return (
-      <>
+      <div class="app">
+        {/* Top bar */}
         <Navbar bg="dark" variant="dark" className="justify-content-between">
           <span>
             <Navbar.Brand href="https://www.ex.co.kr/" target="_blank">
@@ -123,7 +125,10 @@ class App extends React.Component {
           </span>
         </Navbar>
 
-        <Container className="mt-4">
+        {/* Main container */}
+        <Container className="mt-4 mainContainer">
+
+          {/* Horizontal Navigation */}
           <Nav
             variant="tabs"
             activeKey={this.state.tab}
@@ -138,12 +143,15 @@ class App extends React.Component {
             </Nav.Item>
             {tabs}
           </Nav>
-          <Route path="/cads">{routes}</Route>
-          <Route exact path="/">
-            <VideoViewer></VideoViewer>
-          </Route>
+
+          <div className="viewers">
+            <Route path="/cads">{routes}</Route>
+            <Route exact path="/">
+              <VideoViewer></VideoViewer>
+            </Route>
+          </div>
         </Container>
-      </>
+      </div>
     );
   }
 }

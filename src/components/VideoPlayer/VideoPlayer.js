@@ -4,7 +4,8 @@ import "./videoPlayer.scss"
 function VideoPlayer(props) {
   return <div className="videoPlayer">
     <div className="inner">
-      {props.label}
+      <div>{props.label}</div>
+      {props.url ? '' : <div>Video source is not supplied.</div>}
     </div>
   </div>
 }

@@ -9,8 +9,5 @@ body,
   height: 100%;
   margin: 0px;
   padding: 0px;
-}
-
-html {
-  overflow: hidden;
+  background-color: #f6f8fa;
 }
