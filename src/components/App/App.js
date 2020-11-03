@@ -3,7 +3,7 @@ import AppContext from "../Context/AppContext";
 import { Redirect, Route, withRouter, Link } from "react-router-dom";
 import axios from "axios";
 import { Navbar, Nav, Button, Container } from "react-bootstrap";
-import Viewer from "../Viewer/Viewer";
+import CadViewer from "../CadViewer/CadViewer";
 import VideoViewer from "../VideoViewer/VideoViewer";
 
 class Clock extends React.Component {
@@ -94,7 +94,7 @@ class App extends React.Component {
       // Make routes associated to tab
       let route = (
         <Route path={href} key={i}>
-          <Viewer file={cad} data={this.state.cads[cad]}></Viewer>
+          <CadViewer file={cad} data={this.state.cads[cad]}></CadViewer>
         </Route>
       );
       routes.push(route);
@@ -140,26 +140,7 @@ class App extends React.Component {
           </Nav>
           <Route path="/cads">{routes}</Route>
           <Route exact path="/">
-            {/* Video viewer */}
-            <table>
-              <tr>
-                <td></td><td>
-                  <VideoViewer label="top"></VideoViewer>
-                </td><td></td>
-              </tr>
-              <tr>
-                <td>
-                  <VideoViewer label="left"></VideoViewer>
-                </td><td></td><td>
-                  <VideoViewer label="right"></VideoViewer>
-                </td>
-              </tr>
-              <tr>
-                <td></td><td>
-                  <VideoViewer label="bottom"></VideoViewer>
-                </td><td></td>
-              </tr>
-            </table>
+            <VideoViewer></VideoViewer>
           </Route>
         </Container>
       </>

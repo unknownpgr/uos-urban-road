@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 import { Alert, ButtonGroup, Button, Modal, Form } from "react-bootstrap";
-import "./viewer.scss";
+import "./cadViewer.scss";
 import AppContext from "../Context/AppContext";
 
 function px2cnv(cnv, x, y) {
@@ -84,7 +84,7 @@ function getVariable(self, varName, label, type = "text", defaultValue = 0) {
   };
 }
 
-class Viewer extends React.Component {
+class CadViewer extends React.Component {
   static contextType = AppContext;
 
   constructor(props) {
@@ -250,4 +250,4 @@ class Viewer extends React.Component {
   }
 }
 
-export default Viewer;
+export default CadViewer;
