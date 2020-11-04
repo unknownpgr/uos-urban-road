@@ -141,7 +141,7 @@ class CadViewer extends React.Component {
   }
 
   onMouseMove(event) {
-    if (!(this.ctx && this.cnv && this.cad)) return;
+    if (!(this.ctx && this.cnv && this.cad) || this.state.isMenuVisible) return;
     let ctx = this.ctx;
 
     // Draw CAD image
@@ -168,7 +168,7 @@ class CadViewer extends React.Component {
     ctx.fillText(`Y:${Math.round(y)}`, 10, fontSize * 3.5);
   }
 
-  onSetPoint(event, point) {
+  onSetPoint(point) {
     this.setState({
       selectedPoint: point,
       selectedVars: point.vars,
@@ -212,7 +212,7 @@ class CadViewer extends React.Component {
 
   render() {
     let menu = this.points.map((point) => ({
-      onClick: (e) => this.onSetPoint(e, point),
+      onClick: () => this.onSetPoint(point),
       ...point,
     }));
     return (
@@ -251,6 +251,7 @@ class CadViewer extends React.Component {
             <thead>
               <tr>
                 <th scope='col'>#</th>
+                <th scope='col'>Date</th>
                 <th scope='col'>MaxLoad(kN)</th>
                 <th scope='col'>MaxDis(mm)</th>
                 <th scope='col'>E-Inverse</th>
