@@ -165,8 +165,8 @@ class CadViewer extends React.Component {
   onMouseRightClick(event) {
     event.preventDefault();
     let rect = event.target.parentElement.parentElement.getBoundingClientRect();
-    let x = event.clientX - rect.left;
-    let y = event.clientY - rect.top;
+    let x = event.clientX;
+    let y = event.clientY;
 
     this.setState({
       isMenuVisible: !this.state.isMenuVisible,
@@ -190,10 +190,10 @@ class CadViewer extends React.Component {
 
     // Draw cursor(+)
     ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, this.cnv.height);
-    ctx.moveTo(0, y);
-    ctx.lineTo(this.cnv.width, y);
+    ctx.moveTo(x, y - 32);
+    ctx.lineTo(x, y + 32);
+    ctx.moveTo(x - 32, y);
+    ctx.lineTo(x + 32, y);
     ctx.stroke();
 
     // Draw mouse position text
@@ -220,24 +220,39 @@ class CadViewer extends React.Component {
 
   async componentDidMount() {
     try {
-      this.ctx = this.cnv.getContext("2d");
+      // Get metadata
       let meta = this.props.data;
-      let fileFullPath = "/img/cad/" + meta.img;
+
+      // Set canvas
       this.cnv.width = meta.w;
       this.cnv.height = meta.h;
+      this.ctx = this.cnv.getContext("2d");
+      this.ctx.lineWidth = 3
+
+      // Load image
       let img = new Image();
       img.onload = () => {
         this.cad = img;
         this.ctx.drawImage(img, 0, 0);
         this.setState({ alertShow: false });
       };
-      img.src = fileFullPath;
-    } catch {
-      this.setState({ err: true });
+      img.src = "/img/cad/" + meta.img;
+    } catch (e) {
+      this.setState({ alertShow: true, alertState: 'danger', alertStr: '데이터를 로드하던 중 에러가 발생했습니다.' });
+      console.error(e)
     }
   }
 
   render() {
+
+    // Dummy data for demonstration
+    let dummy = []
+    let date = Date.now()
+    for (let i = 0; i < 20; i++) {
+      let current = new Date(date + 3500 * i).toLocaleDateString();
+      dummy.push([i + 1, current, Math.random(), Math.random(), Math.random(), Math.random(), Math.random()])
+    }
+
     return (
       <div className="cadViewer">
         <ClickMenu
@@ -258,28 +273,33 @@ class CadViewer extends React.Component {
           className="alert m-2"
         >{this.state.alertStr}
         </Alert>
-        <div className="viewer">
-          <canvas
-            ref={(cnv) => {
-              this.cnv = cnv;
-            }}
-            className="w-100"
-            onMouseMove={this.onMouseMove}
-            onClick={this.onMouseLeftClick}
-            onContextMenu={this.onMouseRightClick}
-          ></canvas>
-        </div>
+        <canvas
+          ref={(cnv) => {
+            this.cnv = cnv;
+          }}
+          className="w-100"
+          onMouseMove={this.onMouseMove}
+          onClick={this.onMouseLeftClick}
+          onContextMenu={this.onMouseRightClick}
+        ></canvas>
         <div className="table">
           <table>
             <thead>
               <tr>
                 <th scope='col'>#</th>
                 <th scope='col'>Date</th>
+                <th scope='col'>Long</th>
+                <th scope='col'>Lat</th>
                 <th scope='col'>MaxLoad(kN)</th>
                 <th scope='col'>MaxDis(mm)</th>
                 <th scope='col'>E-Inverse</th>
               </tr>
             </thead>
+            <tbody>
+              {dummy.map((row, i) => <tr key={i + 'i'}>
+                {row.map((item, j) => <td key={j + 'j'}>{item + ''}</td>)}
+              </tr>)}
+            </tbody>
           </table>
         </div>
       </div>

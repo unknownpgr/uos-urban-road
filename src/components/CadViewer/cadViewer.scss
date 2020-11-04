@@ -8,38 +8,19 @@
   }
 
   .clickMenu {
-    position: absolute;
+    position: fixed;
   }
 
   .table {
-    flex: 1;
+    margin-top: 2rem;
   }
 
   table {
     width: 100%;
   }
 
-  @media (min-width: 1241px) {
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    padding: 32px 0;
-
-    .viewer {
-      height: 100%;
-      overflow: auto;
-      width: 60%;
-    }
-  }
-
-  @media (max-width: 1240px) {
-    height: 100%;
-    flex-direction: column;
-    overflow: scroll;
-
-    .viewer {
-      width: 100%;
-      height: fit-content;
-    }
+  .viewer {
+    width: 100%;
+    height: fit-content;
   }
 }
