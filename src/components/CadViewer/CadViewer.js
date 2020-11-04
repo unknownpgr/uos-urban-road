@@ -5,6 +5,7 @@ import "./cadViewer.scss";
 import AppContext from "../Context/AppContext";
 
 function px2cnv(cnv, x, y) {
+  // Convert mouse position to canvas pixel.
   let rect = cnv.getBoundingClientRect();
   let scaleX = cnv.width / rect.width;
   let scaleY = cnv.height / rect.height;
@@ -22,14 +23,12 @@ function ClickMenu(props) {
         display: props.show ? undefined : "none",
         left: props.x,
         top: props.y,
-      }}
-    >
+      }}>
       {props.points?.map((point, i) => (
         <Button
           onClick={() => props.onClick(point)}
           key={i}
-          variant={point.isSet() ? "success" : "primary"}
-        >
+          variant={point.isSet() ? "success" : "primary"}>
           {point.varLabel}
         </Button>
       ))}
@@ -122,7 +121,8 @@ class CadCalibration {
   }
 
   isSet() {
-    return this.get('imgX') * this.get('imgY') > 0
+    if (this.useX) { return this.get('gpsX') * this.get('gpsY') > 0; }
+    else { return this.get('gpsY') > 0; }
   }
 }
 
@@ -145,8 +145,8 @@ class CadViewer extends React.Component {
       menuX: 0,
       menuY: 0,
     };
-    this.mouseX = 0;
-    this.mouseY = 0;
+    this.imgX = 0;
+    this.imgY = 0;
 
     this.points = [
       new CadCalibration(this, 'Point A', 'Calibration point A'),
@@ -183,10 +183,10 @@ class CadViewer extends React.Component {
     ctx.clearRect(0, 0, this.cnv.width, this.cnv.height);
     ctx.drawImage(this.cad, 0, 0);
 
-    // Get mouse position
+    // Get mouse position in pixel
     let [x, y, scaleX] = px2cnv(this.cnv, event.clientX, event.clientY);
-    this.mouseX = x;
-    this.mouseY = y;
+    this.imgX = x;
+    this.imgY = y;
 
     // Draw cursor(+)
     ctx.beginPath();
@@ -204,8 +204,8 @@ class CadViewer extends React.Component {
   }
 
   onMenuClicked(point) {
-    point.set('imgX', this.mouseX)
-    point.set('imgY', this.mouseY)
+    point.set('imgX', this.imgX)
+    point.set('imgY', this.imgY)
     this.setState({
       selectedPoint: point,
       isInputVisible: true,
