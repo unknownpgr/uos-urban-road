@@ -25,7 +25,11 @@ function ClickMenu(props) {
       }}
     >
       {props.points?.map((point, i) => (
-        <Button onClick={() => props.onClick(point)} key={i}>
+        <Button
+          onClick={() => props.onClick(point)}
+          key={i}
+          variant={point.isSet() ? "success" : "primary"}
+        >
           {point.varLabel}
         </Button>
       ))}
@@ -115,6 +119,10 @@ class CadCalibration {
 
   getSetter(propertyName) {
     return (newValue) => this.set(propertyName, newValue)
+  }
+
+  isSet() {
+    return this.get('imgX') * this.get('imgY') > 0
   }
 }
 
