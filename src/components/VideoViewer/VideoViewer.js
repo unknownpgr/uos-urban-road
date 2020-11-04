@@ -3,24 +3,30 @@ import VideoPlayer from "../VideoPlayer/VideoPlayer"
 import "./videoViewer.scss"
 
 function VideoViewer() {
-  return <table class="videoViewer">
-    <tr>
-      <td></td><td>
-        <VideoPlayer label="top"></VideoPlayer>
-      </td><td></td>
-    </tr>
-    <tr>
-      <td>
-        <VideoPlayer label="left"></VideoPlayer>
-      </td><td></td><td>
-        <VideoPlayer label="right"></VideoPlayer>
-      </td>
-    </tr>
-    <tr>
-      <td></td><td>
-        <VideoPlayer label="bottom"></VideoPlayer>
-      </td><td></td>
-    </tr>
+  return <table className="videoViewer">
+    <tbody>
+      <tr>
+        <td></td><td>
+          <VideoPlayer label="top"></VideoPlayer>
+        </td><td></td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td>
+          <VideoPlayer label="left"></VideoPlayer>
+        </td><td></td><td>
+          <VideoPlayer label="right"></VideoPlayer>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td></td><td>
+          <VideoPlayer label="bottom"></VideoPlayer>
+        </td><td></td>
+      </tr>
+    </tbody>
   </table>
 }
 

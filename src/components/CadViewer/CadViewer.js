@@ -19,14 +19,14 @@ function ClickMenu(props) {
       vertical
       className="clickMenu"
       style={{
-        display: props.hidden ? "none" : undefined,
+        display: props.show ? undefined : "none",
         left: props.x,
         top: props.y,
       }}
     >
-      {props.menu?.map((menu, i) => (
-        <Button onClick={menu.onClick} key={i}>
-          {menu.text}
+      {props.points?.map((point, i) => (
+        <Button onClick={() => props.onClick(point)} key={i}>
+          {point.varLabel}
         </Button>
       ))}
     </ButtonGroup>
@@ -34,30 +34,41 @@ function ClickMenu(props) {
 }
 
 function LabeledInput(props) {
-  let { value, type, label, setValue } = props;
+  let { label, value, setValue } = props;
   return (
     <Form.Group>
       <Form.Label>{label}</Form.Label>
       <Form.Control
-        onChange={setValue}
+        onChange={e => setValue(e.target.value)}
         value={value()}
-        type={type}
+        type='number'
       ></Form.Control>
     </Form.Group>
   );
 }
 
-function PositionInputForm(props) {
+function CalibrationInputForm(props) {
+  let point = props.point;
   return (
-    <Modal show={props.show}>
+    <Modal show={props.show} >
       <Modal.Header>
-        <Modal.Title>캘리브레이션 {props.text} 세팅</Modal.Title>
+        <Modal.Title>캘리브레이션 {point?.varLabel} 세팅</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
-          {props.vars?.map((variable, i) => (
-            <LabeledInput {...variable} key={i}></LabeledInput>
-          ))}
+          {point?.useX ?
+            <LabeledInput
+              label='X'
+              value={point?.getGetter('gpsX')}
+              setValue={point?.getSetter('gpsX')}
+            >
+            </LabeledInput> : undefined}
+          <LabeledInput
+            label='Y'
+            value={point?.getGetter('gpsY')}
+            setValue={point?.getSetter('gpsY')}
+          >
+          </LabeledInput>
         </Form>
       </Modal.Body>
       <Modal.Footer>
@@ -69,18 +80,42 @@ function PositionInputForm(props) {
   );
 }
 
-function getVariable(self, varName, label, defaultValue = 0) {
-  if (self.state[varName] === undefined) self.state[varName] = defaultValue;
-  return {
-    label,
-    value: () => self.state[varName],
-    setValue: (event) => {
-      let value = event.target.value;
-      let update = {};
-      update[varName] = value;
-      self.setState(update);
-    },
-  };
+class CadCalibration {
+  constructor(component, varName, varLabel, useX = true) {
+    this.varName = varName;
+    this.varLabel = varLabel;
+    this.component = component;
+    this.useX = useX;
+
+    if (!(component.state.calibration)) component.state.calibration = {};
+
+    component.state.calibration[varName] = {
+      varName,
+      varLabel,
+      imgX: 0,
+      imgY: 0,
+      gpsX: 0,
+      gpsY: 0,
+    }
+  }
+
+  get(propertyName) {
+    return this.component.state.calibration[this.varName][propertyName]
+  }
+
+  set(propertyName, newValue) {
+    let { calibration } = this.component.state;         // Get state
+    calibration[this.varName][propertyName] = newValue  // Update state
+    this.component.setState({ calibration })            // Set updated state with re-rendering
+  }
+
+  getGetter(propertyName) {
+    return () => this.get(propertyName)
+  }
+
+  getSetter(propertyName) {
+    return (newValue) => this.set(propertyName, newValue)
+  }
 }
 
 class CadViewer extends React.Component {
@@ -91,36 +126,28 @@ class CadViewer extends React.Component {
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseLeftClick = this.onMouseLeftClick.bind(this);
     this.onMouseRightClick = this.onMouseRightClick.bind(this);
-    this.onSetPoint = this.onSetPoint.bind(this);
-    this.onInputSave = this.onInputSave.bind(this);
+    this.onMenuClicked = this.onMenuClicked.bind(this);
+    this.onInputClosed = this.onInputClosed.bind(this);
     this.state = {
       alertShow: true,
       alertStr: "Loading CAD image...",
       alertState: "primary",
       isMenuVisible: false,
       isInputVisible: false,
-      selectedPoint: {},
-      selectedVars: [],
       menuX: 0,
       menuY: 0,
     };
-    this.points = [
-      { vars: ["pax", "pay"], text: "포인트 평면도 A" },
-      { vars: ["pbx", "pby"], text: "포인트 평면도 B" },
-      { vars: ["pcy"], text: "포인트 측면도 A" },
-      { vars: ["pdy"], text: "포인트 측면도 B" },
-    ];
-    this.vars = {
-      pax: getVariable(this, "pax", "X"),
-      pay: getVariable(this, "pay", "Y"),
-      pbx: getVariable(this, "pbx", "X"),
-      pby: getVariable(this, "pby", "Y"),
-      pcy: getVariable(this, "pcy", "Height"),
-      pdy: getVariable(this, "pdy", "Height"),
-    };
     this.mouseX = 0;
     this.mouseY = 0;
+
+    this.points = [
+      new CadCalibration(this, 'Point A', 'Calibration point A'),
+      new CadCalibration(this, 'Point B', 'Calibration point B'),
+      new CadCalibration(this, 'Point C', 'Calibration point C', false),
+      new CadCalibration(this, 'Point D', 'Calibration point D', false),
+    ]
   }
+
   onMouseLeftClick(event) {
     if (event.button !== 0) return;
     event.preventDefault();
@@ -168,27 +195,19 @@ class CadViewer extends React.Component {
     ctx.fillText(`Y:${Math.round(y)}`, 10, fontSize * 3.5);
   }
 
-  onSetPoint(point) {
+  onMenuClicked(point) {
+    point.set('imgX', this.mouseX)
+    point.set('imgY', this.mouseY)
     this.setState({
       selectedPoint: point,
-      selectedVars: point.vars,
       isInputVisible: true,
       isMenuVisible: false,
     });
   }
 
-  onInputSave() {
+  onInputClosed() {
     this.setState({ isInputVisible: false });
-    axios.post("/api/pivot", {
-      img: this.props.data.img,
-      pax: this.state.pax,
-      pay: this.state.pay,
-      pbx: this.state.pbx,
-      pby: this.state.pby,
-      pcy: this.state.pcy,
-      pdy: this.state.pdy,
-      token: this.context.token,
-    });
+    axios.post('/api/cali', { data: this.state.calibration });
   }
 
   async componentDidMount() {
@@ -211,29 +230,26 @@ class CadViewer extends React.Component {
   }
 
   render() {
-    let menu = this.points.map((point) => ({
-      onClick: () => this.onSetPoint(point),
-      ...point,
-    }));
     return (
       <div className="cadViewer">
         <ClickMenu
-          hidden={!this.state.isMenuVisible}
+          show={this.state.isMenuVisible}
           x={this.state.menuX}
           y={this.state.menuY}
-          menu={menu}
+          points={this.points}
+          onClick={this.onMenuClicked}
         ></ClickMenu>
-        <PositionInputForm
-          text={this.state.selectedPoint.text}
+        <CalibrationInputForm
           show={this.state.isInputVisible}
-          vars={this.state.selectedVars.map((x) => this.vars[x])}
-          onSave={this.onInputSave}
-        ></PositionInputForm>
+          point={this.state.selectedPoint}
+          onSave={this.onInputClosed}
+        ></CalibrationInputForm>
         <Alert
           style={{ opacity: this.state.alertShow ? 0.9 : 0 }}
           variant={this.state.alertState}
           className="alert m-2"
-        >{this.state.alertStr}</Alert>
+        >{this.state.alertStr}
+        </Alert>
         <div className="viewer">
           <canvas
             ref={(cnv) => {
@@ -243,8 +259,7 @@ class CadViewer extends React.Component {
             onMouseMove={this.onMouseMove}
             onClick={this.onMouseLeftClick}
             onContextMenu={this.onMouseRightClick}
-          >
-          </canvas>
+          ></canvas>
         </div>
         <div className="table">
           <table>
