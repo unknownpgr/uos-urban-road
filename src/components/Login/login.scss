@@ -1,17 +1,23 @@
 .background {
-  overflow: auto;
-  height: 100%;
+  position: absolute;
   width: 100%;
+  height: 100%;
+  background: url(/img/background.jpg) no-repeat center center;
+  background-size: cover;
+  // -webkit-background-size: cover;
+  // -moz-background-size: cover;
+  // -o-background-size: cover;
+  z-index: 0;
+}
+
+.background::before {
   content: "";
   position: absolute;
-  display: block;
-  background: url(/img/background.jpg) center center fixed no-repeat;
-  background-size: cover;
-  z-index: -1;
-  filter: blur(5px);
-  transform: scale(1.1);
-  height: 100%;
   width: 100%;
+  height: 100%;
+  -webkit-backdrop-filter: blur(5px); /* apply the blur */
+  backdrop-filter: blur(5px); /* apply the blur */
+  pointer-events: none; /* make the pseudo class click-through */
 }
 
 .login {

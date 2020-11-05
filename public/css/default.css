@@ -11,3 +11,7 @@ body,
   padding: 0px;
   background-color: #f6f8fa;
 }
+
+body {
+  overflow: auto;
+}
