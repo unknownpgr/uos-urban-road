@@ -148,6 +148,7 @@ class CadViewer extends React.Component {
     this.imgX = 0;
     this.imgY = 0;
 
+    // Array of calibration points
     this.points = [
       new CadCalibration(this, 'Point A', 'Calibration point A'),
       new CadCalibration(this, 'Point B', 'Calibration point B'),
@@ -199,8 +200,22 @@ class CadViewer extends React.Component {
     // Draw mouse position text
     let fontSize = Math.round(scaleX * 15);
     ctx.font = fontSize + "px Ariel";
-    ctx.fillText(`X:${Math.round(x)}`, 10, fontSize * 2);
-    ctx.fillText(`Y:${Math.round(y)}`, 10, fontSize * 3.5);
+    ctx.fillText(`X:${Math.round(x)}`, x + fontSize, y + fontSize * 1.5);
+    ctx.fillText(`Y:${Math.round(y)}`, x + fontSize, y + fontSize * 3);
+
+    // Draw pivot
+    ctx.beginPath()
+    ctx.fillStyle = '#0000ff'
+    this.points.forEach(point => {
+      if (!point.isSet()) return
+      let ix = point.get("imgX");
+      let iy = point.get("imgY")
+      ctx.moveTo(ix, iy);
+      ctx.lineTo(ix + 5, iy - 10);
+      ctx.lineTo(ix - 5, iy - 10);
+      ctx.fillText("(" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20)
+    })
+    ctx.fill()
   }
 
   onMenuClicked(point) {
