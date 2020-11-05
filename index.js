@@ -72,9 +72,24 @@ app.get("/api/cads", (req, res) => {
 
 // Set pivot of an CAD file
 app.post("/api/cali", (req, res) => {
-  // TODO : Connecto to DB
-  console.log(req.body)
-  res.status(201).send({});
+  let { img, data } = req.body
+  let errorMsg = null
+  Object.keys(data).forEach(key => {
+    let row = data[key]
+    db.run(`REPLACE INTO calibration (cad, idx, img_x, img_y, gps_x, gps_y) VALUES (?, ?, ?, ?, ?, ?);`,
+      [img, key, row.imgX, row.imgY, row.gpsX, row.gpsY],
+      (error) => {
+        if (error) {
+          errorMsg = error
+          console.log(errorMsg)
+        }
+      })
+  })
+
+  // ToDo : Fix here - because `run` is asynchronous, this check is always true. meaningless.
+  if (!errorMsg) res.status(201).send({});
+  else res.status(400).send({ errorMsg });
+  db.all('SELECT * FROM calibration', (err, rows) => console.log(rows))
 });
 
 // 404 Route

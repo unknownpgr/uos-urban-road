@@ -138,7 +138,7 @@ class CadViewer extends React.Component {
     this.onInputClosed = this.onInputClosed.bind(this);
     this.state = {
       alertShow: true,
-      alertStr: "Loading CAD image...",
+      alertStr: "CAD 데이터 로딩 중...",
       alertState: "primary",
       isMenuVisible: false,
       isInputVisible: false,
@@ -165,7 +165,6 @@ class CadViewer extends React.Component {
 
   onMouseRightClick(event) {
     event.preventDefault();
-    let rect = event.target.parentElement.parentElement.getBoundingClientRect();
     let x = event.clientX;
     let y = event.clientY;
 
@@ -230,13 +229,14 @@ class CadViewer extends React.Component {
 
   onInputClosed() {
     this.setState({ isInputVisible: false });
-    axios.post('/api/cali', { data: this.state.calibration });
+    axios.post('/api/cali', { data: this.state.calibration, img: this.meta.img });
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     try {
       // Get metadata
       let meta = this.props.data;
+      this.meta = meta;
 
       // Set canvas
       this.cnv.width = meta.w;

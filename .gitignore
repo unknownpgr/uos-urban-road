@@ -117,3 +117,4 @@ dist
 
 private/
 build/
+database.db
