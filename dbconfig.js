@@ -1,9 +1,8 @@
 const sqlite3 = require("sqlite3");
-const fs = require('fs')
+const fs = require('fs').promises
+const util = require('util')
 
 const DB_NAME = "database.db"
-
-let db = new sqlite3.Database(DB_NAME);
 
 let table_calibration = `
 CREATE TABLE calibration (
@@ -22,13 +21,31 @@ CREATE TABLE users (
     pw TEXT
 );`;
 
-function err(e) {
-    if (e) console.error(e)
+async function main() {
+    // Remove existing datatbase file
+    try { await fs.unlink(DB_NAME); } catch { }
+
+    // Create a new database
+    let db = new sqlite3.Database(DB_NAME);
+    let db_run = function (query, callback) {
+        return new Promise((resolve, reject) => {
+            db.run(query, (err) => {
+                if (err) reject(err);
+                else resolve();
+            })
+        })
+    }
+
+    try {
+        // Create calibration table
+        await db_run(table_calibration);
+        // Create user table
+        await db_run(table_user);
+        // Insert test user
+        await db_run(`INSERT INTO users (id, pw) VALUES ("road1", "road1")`);
+    } catch (e) {
+        console.error(e)
+    }
 }
 
-try { fs.unlinkSync(DB_NAME); } catch { }
-db.run(table_calibration, err);
-db.run(table_user, err);
-setTimeout(() => {
-    db.run(`INSERT INTO users (id, pw) VALUES ("road1", "road1")`, err);
-}, 100);
+main()
