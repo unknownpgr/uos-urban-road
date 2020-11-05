@@ -4,14 +4,11 @@ let db = new sqlite3.Database("database.db");
 
 let table_calibration = `
 CREATE TABLE calibration (
-    src_x1 INTEGER,
-    src_x2 INTEGER,
-    src_y1 INTEGER,
-    src_y2 INTEGER,
-    dst_x1 INTEGER,
-    dst_x2 INTEGER,
-    dst_y1 INTEGER,
-    dst_y2 INTEGER
+    cad   TEXT,
+    src_x INTEGER,
+    src_y INTEGER,
+    dst_x INTEGER,
+    dst_y INTEGER
 );
 `;
 
