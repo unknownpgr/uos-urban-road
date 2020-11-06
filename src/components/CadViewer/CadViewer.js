@@ -4,6 +4,14 @@ import { Alert, ButtonGroup, Button, Modal, Form } from "react-bootstrap";
 import "./cadViewer.scss";
 import AppContext from "../Context/AppContext";
 
+async function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    let img = new Image();
+    img.onload = () => resolve(img);
+    img.src = src;
+  });
+}
+
 function px2cnv(cnv, x, y) {
   // Convert mouse position to canvas pixel.
   let rect = cnv.getBoundingClientRect();
@@ -84,40 +92,40 @@ function CalibrationInputForm(props) {
 }
 
 class CadCalibration {
-  constructor(component, varName, varLabel, useX = true) {
-    this.varName = varName;
+  constructor(component, idx, varLabel, useX = true) {
+    this.idx = idx;
     this.varLabel = varLabel;
     this.component = component;
     this.useX = useX;
 
     if (!(component.state.calibration)) component.state.calibration = {};
 
-    component.state.calibration[varName] = {
-      varName,
+    component.state.calibration[idx] = {
+      idx,
       varLabel,
       imgX: 0,
       imgY: 0,
       gpsX: 0,
       gpsY: 0,
-    }
+    };
   }
 
   get(propertyName) {
-    return this.component.state.calibration[this.varName][propertyName]
+    return this.component.state.calibration[this.idx][propertyName];
   }
 
   set(propertyName, newValue) {
-    let { calibration } = this.component.state;         // Get state
-    calibration[this.varName][propertyName] = newValue  // Update state
-    this.component.setState({ calibration })            // Set updated state with re-rendering
+    let { calibration } = this.component.state;     // Get state
+    calibration[this.idx][propertyName] = newValue; // Update state
+    this.component.setState({ calibration });       // Set updated state with re-rendering
   }
 
   getGetter(propertyName) {
-    return () => this.get(propertyName)
+    return () => this.get(propertyName);
   }
 
   getSetter(propertyName) {
-    return (newValue) => this.set(propertyName, newValue)
+    return (newValue) => this.set(propertyName, newValue);
   }
 
   isSet() {
@@ -131,6 +139,7 @@ class CadViewer extends React.Component {
 
   constructor(props) {
     super(props);
+    this.repaint = this.repaint.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseLeftClick = this.onMouseLeftClick.bind(this);
     this.onMouseRightClick = this.onMouseRightClick.bind(this);
@@ -154,7 +163,43 @@ class CadViewer extends React.Component {
       new CadCalibration(this, 'Point B', 'Calibration point B'),
       new CadCalibration(this, 'Point C', 'Calibration point C', false),
       new CadCalibration(this, 'Point D', 'Calibration point D', false),
-    ]
+    ];
+  }
+
+  repaint() {
+    let { ctx, imgX: x, imgY: y, scale } = this;
+
+    // Draw CAD image
+    ctx.clearRect(0, 0, this.cnv.width, this.cnv.height);
+    ctx.drawImage(this.cadImg, 0, 0);
+
+    // Draw cursor(+ shape)
+    ctx.beginPath();
+    ctx.moveTo(x, y - 32);
+    ctx.lineTo(x, y + 32);
+    ctx.moveTo(x - 32, y);
+    ctx.lineTo(x + 32, y);
+    ctx.stroke();
+
+    // Draw mouse position text
+    let fontSize = Math.round(scale * 15);
+    ctx.font = fontSize + "px Ariel";
+    ctx.fillText(`X:${Math.round(x)}`, x + fontSize, y + fontSize * 1.5);
+    ctx.fillText(`Y:${Math.round(y)}`, x + fontSize, y + fontSize * 3);
+
+    // Draw pivot
+    ctx.fillStyle = '#0000ff';
+    this.points.forEach(point => {
+      if (!point.isSet()) return;
+      let ix = point.get("imgX");
+      let iy = point.get("imgY");
+      ctx.beginPath();
+      ctx.moveTo(ix, iy);
+      ctx.lineTo(ix + 5, iy - 10);
+      ctx.lineTo(ix - 5, iy - 10);
+      ctx.fill();
+      ctx.fillText("(" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20);
+    });
   }
 
   onMouseLeftClick(event) {
@@ -176,50 +221,19 @@ class CadViewer extends React.Component {
   }
 
   onMouseMove(event) {
-    if (!(this.ctx && this.cnv && this.cad) || this.state.isMenuVisible) return;
-    let ctx = this.ctx;
-
-    // Draw CAD image
-    ctx.clearRect(0, 0, this.cnv.width, this.cnv.height);
-    ctx.drawImage(this.cad, 0, 0);
+    if (!(this.ctx && this.cnv && this.cadImg) || this.state.isMenuVisible) return;
 
     // Get mouse position in pixel
-    let [x, y, scaleX] = px2cnv(this.cnv, event.clientX, event.clientY);
+    let [x, y, scale] = px2cnv(this.cnv, event.clientX, event.clientY);
     this.imgX = x;
     this.imgY = y;
-
-    // Draw cursor(+)
-    ctx.beginPath();
-    ctx.moveTo(x, y - 32);
-    ctx.lineTo(x, y + 32);
-    ctx.moveTo(x - 32, y);
-    ctx.lineTo(x + 32, y);
-    ctx.stroke();
-
-    // Draw mouse position text
-    let fontSize = Math.round(scaleX * 15);
-    ctx.font = fontSize + "px Ariel";
-    ctx.fillText(`X:${Math.round(x)}`, x + fontSize, y + fontSize * 1.5);
-    ctx.fillText(`Y:${Math.round(y)}`, x + fontSize, y + fontSize * 3);
-
-    // Draw pivot
-    ctx.beginPath()
-    ctx.fillStyle = '#0000ff'
-    this.points.forEach(point => {
-      if (!point.isSet()) return
-      let ix = point.get("imgX");
-      let iy = point.get("imgY")
-      ctx.moveTo(ix, iy);
-      ctx.lineTo(ix + 5, iy - 10);
-      ctx.lineTo(ix - 5, iy - 10);
-      ctx.fillText("(" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20)
-    })
-    ctx.fill()
+    this.scale = scale;
+    this.repaint();
   }
 
   onMenuClicked(point) {
-    point.set('imgX', this.imgX)
-    point.set('imgY', this.imgY)
+    point.set('imgX', this.imgX);
+    point.set('imgY', this.imgY);
     this.setState({
       selectedPoint: point,
       isInputVisible: true,
@@ -242,30 +256,48 @@ class CadViewer extends React.Component {
       this.cnv.width = meta.w;
       this.cnv.height = meta.h;
       this.ctx = this.cnv.getContext("2d");
-      this.ctx.lineWidth = 3
+      this.ctx.lineWidth = 3;
 
       // Load image
-      let img = new Image();
-      img.onload = () => {
-        this.cad = img;
-        this.ctx.drawImage(img, 0, 0);
+      let loadProc = loadImage("/img/cad/" + meta.img).then(img => {
+        this.cadImg = img;
         this.setState({ alertShow: false });
-      };
-      img.src = "/img/cad/" + meta.img;
+      });
+
+      // Get calibration data
+      let dataProc = axios.get('/api/cali?img=' + meta.img)
+        .then(x => x.data)
+        .then((result) => {
+          result.data.forEach(point => {
+            Object.keys(point).forEach(key => {
+              this.state.calibration[point.idx][key] = point[key];
+            });
+          });
+        });
+
+      Promise.all([loadProc, dataProc])
+        .then(() => {
+          // Calculate scale
+          let [_1, _2, scale] = px2cnv(this.cnv, 0, 0);
+          this.scale = scale;
+
+          // Repaint
+          this.repaint();
+        });
     } catch (e) {
       this.setState({ alertShow: true, alertState: 'danger', alertStr: '데이터를 로드하던 중 에러가 발생했습니다.' });
-      console.error(e)
+      console.error(e);
     }
   }
 
   render() {
 
     // Dummy data for demonstration
-    let dummy = []
-    let date = Date.now()
+    let dummy = [];
+    let date = Date.now();
     for (let i = 0; i < 20; i++) {
       let current = new Date(date + 3500 * i).toLocaleDateString();
-      dummy.push([i + 1, current, Math.random(), Math.random(), Math.random(), Math.random(), Math.random()])
+      dummy.push([i + 1, current, Math.random(), Math.random(), Math.random(), Math.random(), Math.random()]);
     }
 
     return (

@@ -1,14 +1,14 @@
 const Database = require("sqlite-async");
-const fs = require('fs').promises
+const fs = require('fs').promises;
 
 let table_calibration = `
 CREATE TABLE calibration (
     cad   TEXT NOT NULL,
     idx   INTEGER NOT NULL,
-    img_x INTEGER,
-    img_y INTEGER,
-    gps_x INTEGER,
-    gps_y INTEGER,
+    imgX INTEGER,
+    imgY INTEGER,
+    gpsX INTEGER,
+    gpsY INTEGER,
     UNIQUE(cad, idx)
 );`;
 
@@ -19,15 +19,11 @@ CREATE TABLE users (
 );`;
 
 async function initDB(database_file) {
-    // Check file name
-    if (!database_file.endsWith('.db')) throw new Error(`[${database_file}] does not seem to be a database file.`)
-
-    // Remove existing datatbase file
-    try { await fs.unlink(database_file); } catch { }
-
     // Create a new database
     let db = await Database.open(database_file);
-
+    // Drop tables
+    await db.run(`DROP TABLE users`);
+    await db.run(`DROP TABLE calibration`);
     // Create calibration table
     await db.run(table_calibration);
     // Create user table
@@ -36,4 +32,4 @@ async function initDB(database_file) {
     await db.run(`INSERT INTO users (id, pw) VALUES ("road1", "road1")`);
 }
 
-initDB();
+initDB('database.db');

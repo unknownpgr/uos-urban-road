@@ -41,9 +41,9 @@ app.use(auth);
 
 // Log all requests
 app.use((req, res, next) => {
-  console.log(new Date(), req.path)
-  next()
-})
+  console.log(new Date(), req.path);
+  next();
+});
 
 // Set login submit
 app.post("/api/login", async (req, res) => {
@@ -53,7 +53,7 @@ app.post("/api/login", async (req, res) => {
     res.send({ token });
     if (!token) console.err("Login token did not generated.");
   } catch (e) {
-    console.error(e)
+    console.error(e);
     res.status(404).send({ err: "Failed to login" });
   }
 });
@@ -78,17 +78,23 @@ app.get("/api/cads", (req, res) => {
 // Set pivot of an CAD file
 app.post("/api/cali", async (req, res) => {
   try {
-    let { img, data } = req.body
-    let keys = Object.keys(data)
+    let { img, data } = req.body;
+    let keys = Object.keys(data);
     await db.transaction(db =>
       Promise.all(keys.map(key => {
-        let row = data[key]
-        return db.run(`REPLACE INTO calibration (cad, idx, img_x, img_y, gps_x, gps_y) VALUES (?, ?, ?, ?, ?, ?);`,
+        let row = data[key];
+        return db.run(`REPLACE INTO calibration (cad, idx, imgX, imgY, gpsX, gpsY) VALUES (?, ?, ?, ?, ?, ?);`,
           [img, key, row.imgX, row.imgY, row.gpsX, row.gpsY]);
       }))
-    )
+    );
     res.status(201).send({});
   } catch (err) { res.status(400).send({ err }); }
+});
+
+// Get pivots of an CAD file
+app.get('/api/cali', async (req, res) => {
+  let data = await db.all('SELECT * FROM calibration WHERE cad=?', [req.query.img]);
+  res.send({ data });
 });
 
 // 404 Route
@@ -100,7 +106,7 @@ app.get("*", function (req, res) {
 async function main() {
   db = await Database.open("database.db");
   app.listen(PORT, () => {
-    console.log("Server started at port" + PORT);
+    console.log("Server started at port " + PORT);
   });
 }
 main();
