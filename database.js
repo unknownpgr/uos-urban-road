@@ -1,8 +1,5 @@
 const sqlite3 = require("sqlite3");
 const fs = require('fs').promises
-const util = require('util')
-
-const DB_NAME = "database.db"
 
 let table_calibration = `
 CREATE TABLE calibration (
@@ -21,31 +18,45 @@ CREATE TABLE users (
     pw TEXT
 );`;
 
-async function main() {
-    // Remove existing datatbase file
-    try { await fs.unlink(DB_NAME); } catch { }
-
-    // Create a new database
-    let db = new sqlite3.Database(DB_NAME);
-    let db_run = function (query, callback) {
+function promisifyDBFunction(db, func) {
+    return (query, params) => {
+        if (!params) params = []
         return new Promise((resolve, reject) => {
-            db.run(query, (err) => {
+            db[func](query, (err) => {
                 if (err) reject(err);
                 else resolve();
             })
         })
     }
+}
+
+function promisifyDB(db) {
+    db.get = promisifyDBFunction(db, 'get')
+    db.run = promisifyDBFunction(db, 'run')
+    db.all = promisifyDBFunction(db, 'all')
+}
+
+async function initDB(database_file) {
+    // Check file name
+    if (!database_file.endsWith('.db')) throw new Error(`[${database_file}] does not seem to be a database file.`)
+
+    // Remove existing datatbase file
+    try { await fs.unlink(database_file); } catch { }
+
+    // Create a new database
+    let db = new sqlite3.Database(database_file);
+    promisifyDB(db)
 
     try {
         // Create calibration table
-        await db_run(table_calibration);
+        await db.run(table_calibration);
         // Create user table
-        await db_run(table_user);
+        await db.run(table_user);
         // Insert test user
-        await db_run(`INSERT INTO users (id, pw) VALUES ("road1", "road1")`);
+        await db.run(`INSERT INTO users (id, pw) VALUES ("road1", "road1")`);
     } catch (e) {
         console.error(e)
     }
 }
 
-main()
+module.exports = { initDB, promisifyDB }

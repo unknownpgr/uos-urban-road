@@ -4,8 +4,10 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const loginSystem = require("./login");
 const sqlite3 = require("sqlite3");
+const { promisifyDB } = require('./database');
 
 let db = new sqlite3.Database("database.db");
+promisifyDB(db)
 
 const { login, logout, auth } = loginSystem();
 
