@@ -3,11 +3,12 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const loginSystem = require("./login");
-const sqlite3 = require("sqlite3");
-const { promisifyDB } = require('./database');
+const Database = require("sqlite-async");
 
-let db = new sqlite3.Database("database.db");
-promisifyDB(db)
+const PORT = 1501;
+
+// Database will be assigned in the main function at bottom, before the server started.
+let db;
 
 const { login, logout, auth } = loginSystem();
 
@@ -15,7 +16,7 @@ const { login, logout, auth } = loginSystem();
 let app = express();
 
 app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(bodyParser.json()); // Parse post body as json
+app.use(bodyParser.json()); // Parse the post body as json
 app.use(auth);
 
 /**
@@ -38,6 +39,7 @@ app.use(auth);
  * https://sanghaklee.tistory.com/57
  */
 
+// Log all requests
 app.use((req, res, next) => {
   console.log(new Date(), req.path)
   next()
@@ -50,7 +52,8 @@ app.post("/api/login", async (req, res) => {
     let token = await login(id, pw);
     res.send({ token });
     if (!token) console.err("Login token did not generated.");
-  } catch {
+  } catch (e) {
+    console.error(e)
     res.status(404).send({ err: "Failed to login" });
   }
 });
@@ -67,31 +70,25 @@ app.get("/api/username", (req, res) => {
   else res.status(401).send({ data: "Dummy", err: "You are not logged in." });
 });
 
-// Get CAD files metadata
+// Get CAD file metadata
 app.get("/api/cads", (req, res) => {
   res.sendFile(__dirname + "/public/cad_config.json");
 });
 
 // Set pivot of an CAD file
-app.post("/api/cali", (req, res) => {
-  let { img, data } = req.body
-  let errorMsg = null
-  Object.keys(data).forEach(key => {
-    let row = data[key]
-    db.run(`REPLACE INTO calibration (cad, idx, img_x, img_y, gps_x, gps_y) VALUES (?, ?, ?, ?, ?, ?);`,
-      [img, key, row.imgX, row.imgY, row.gpsX, row.gpsY],
-      (error) => {
-        if (error) {
-          errorMsg = error
-          console.log(errorMsg)
-        }
-      })
-  })
-
-  // ToDo : Fix here - because `run` is asynchronous, this check is always true. meaningless.
-  if (!errorMsg) res.status(201).send({});
-  else res.status(400).send({ errorMsg });
-  db.all('SELECT * FROM calibration', (err, rows) => console.log(rows))
+app.post("/api/cali", async (req, res) => {
+  try {
+    let { img, data } = req.body
+    let keys = Object.keys(data)
+    await db.transaction(db =>
+      Promise.all(keys.map(key => {
+        let row = data[key]
+        return db.run(`REPLACE INTO calibration (cad, idx, img_x, img_y, gps_x, gps_y) VALUES (?, ?, ?, ?, ?, ?);`,
+          [img, key, row.imgX, row.imgY, row.gpsX, row.gpsY]);
+      }))
+    )
+    res.status(201).send({});
+  } catch (err) { res.status(400).send({ err }); }
 });
 
 // 404 Route
@@ -100,7 +97,10 @@ app.get("*", function (req, res) {
 });
 
 // Run server
-const PORT = 1501;
-app.listen(PORT, () => {
-  console.log("Server started at " + PORT);
-});
+async function main() {
+  db = await Database.open("database.db");
+  app.listen(PORT, () => {
+    console.log("Server started at port" + PORT);
+  });
+}
+main();

@@ -1,32 +1,24 @@
 let tokenSystem = require("./token");
-const sqlite3 = require("sqlite3");
+const Database = require("sqlite-async");
 
-let db = new sqlite3.Database("database.db");
+let db;
+(async () => db = await Database.open("database.db"))();
 
 /**
- *
- * @param {Dict} users
  * @param {Number} expireTime
  * @param {String} tokenKey
  */
-function loginSystem(users, expireTime = 1000 * 60 * 60, tokenKey = "token") {
+function loginSystem(expireTime = 1000 * 60 * 60, tokenKey = "token") {
   let { create, check, expire } = tokenSystem(expireTime, tokenKey);
   let session = {};
-  function login(id, pw) {
-    return new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id FROM users WHERE id = ? AND pw = ?",
-        [id, pw],
-        (err, row) => {
-          if (err) reject(err);
-          else if (row) {
-            let token = create();
-            session[token] = row;
-            resolve(token);
-          } else reject();
-        }
-      );
-    });
+  async function login(id, pw) {
+    let row = await db.get(
+      "SELECT id FROM users WHERE id = ? AND pw = ?",
+      [id, pw])
+
+    let token = create();
+    session[token] = row;
+    return token;
   }
 
   function logout(token) {
