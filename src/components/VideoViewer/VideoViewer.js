@@ -1,6 +1,6 @@
-import React from "react"
-import VideoPlayer from "../VideoPlayer/VideoPlayer"
-import "./videoViewer.scss"
+import React from "react";
+import VideoPlayer from "../VideoPlayer/VideoPlayer";
+import "./videoViewer.scss";
 
 function VideoViewer() {
   return <table className="videoViewer">
@@ -27,7 +27,7 @@ function VideoViewer() {
         </td><td></td>
       </tr>
     </tbody>
-  </table>
+  </table>;
 }
 
-export default VideoViewer
+export default VideoViewer;

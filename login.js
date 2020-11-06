@@ -14,7 +14,7 @@ function loginSystem(expireTime = 1000 * 60 * 60, tokenKey = "token") {
   async function login(id, pw) {
     let row = await db.get(
       "SELECT id FROM users WHERE id = ? AND pw = ?",
-      [id, pw])
+      [id, pw]);
 
     let token = create();
     session[token] = row;

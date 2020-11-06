@@ -5,7 +5,7 @@ import axios from "axios";
 import { Navbar, Nav, Button, Container } from "react-bootstrap";
 import CadViewer from "../CadViewer/CadViewer";
 import VideoViewer from "../VideoViewer/VideoViewer";
-import "./app.scss"
+import "./app.scss";
 
 class Clock extends React.Component {
   constructor(props) {
@@ -67,10 +67,10 @@ class App extends React.Component {
 
   logout() {
     axios.post("/api/logout?token=" + this.context.token)
-      .then(() => { this.context.setToken(undefined) })
+      .then(() => { this.context.setToken(undefined); })
       .catch(err => {
-        console.log(err)
-      })
+        console.log(err);
+      });
   }
 
   render() {

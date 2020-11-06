@@ -1,5 +1,5 @@
 import React from "react";
-import "./videoPlayer.scss"
+import "./videoPlayer.scss";
 
 function VideoPlayer(props) {
   return <div className="videoPlayer">
@@ -7,7 +7,7 @@ function VideoPlayer(props) {
       <div>{props.label}</div>
       {props.url ? '' : <div>Video source is not supplied.</div>}
     </div>
-  </div>
+  </div>;
 }
 
-export default VideoPlayer
+export default VideoPlayer;
