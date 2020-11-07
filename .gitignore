@@ -118,3 +118,4 @@ dist
 private/
 build/
 database.db
+test.js

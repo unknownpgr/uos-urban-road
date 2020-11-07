@@ -37,7 +37,7 @@ function ClickMenu(props) {
           onClick={() => props.onClick(point)}
           key={i}
           variant={point.isSet() ? "success" : "primary"}>
-          {point.varLabel}
+          {point.label}
         </Button>
       ))}
     </ButtonGroup>
@@ -63,7 +63,7 @@ function CalibrationInputForm(props) {
   return (
     <Modal show={props.show} >
       <Modal.Header>
-        <Modal.Title>캘리브레이션 {point?.varLabel} 세팅</Modal.Title>
+        <Modal.Title>캘리브레이션 {point?.label} 세팅</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
@@ -92,17 +92,17 @@ function CalibrationInputForm(props) {
 }
 
 class CadCalibration {
-  constructor(component, idx, varLabel, useX = true) {
+  constructor(component, idx, label, useX = true) {
     this.idx = idx;
-    this.varLabel = varLabel;
+    this.label = label;
     this.component = component;
     this.useX = useX;
 
+    // Actually, this code is bad, because it directly modifies state of component, without calling setState.
     if (!(component.state.calibration)) component.state.calibration = {};
-
     component.state.calibration[idx] = {
       idx,
-      varLabel,
+      label,
       imgX: 0,
       imgY: 0,
       gpsX: 0,
@@ -145,6 +145,10 @@ class CadViewer extends React.Component {
     this.onMouseRightClick = this.onMouseRightClick.bind(this);
     this.onMenuClicked = this.onMenuClicked.bind(this);
     this.onInputClosed = this.onInputClosed.bind(this);
+
+    // The difference between state and component variable is that
+    // state change always makes re-render.
+    // It works similar to 'ref'.
     this.state = {
       alertShow: true,
       alertStr: "CAD 데이터 로딩 중...",
@@ -154,10 +158,10 @@ class CadViewer extends React.Component {
       menuX: 0,
       menuY: 0,
     };
-    this.imgX = 0;
-    this.imgY = 0;
 
     // Array of calibration points
+    this.imgX = 0;
+    this.imgY = 0;
     this.points = [
       new CadCalibration(this, 'Point A', 'Calibration point A'),
       new CadCalibration(this, 'Point B', 'Calibration point B'),
@@ -277,11 +281,8 @@ class CadViewer extends React.Component {
 
       Promise.all([loadProc, dataProc])
         .then(() => {
-          // Calculate scale
-          let [_1, _2, scale] = px2cnv(this.cnv, 0, 0);
-          this.scale = scale;
-
-          // Repaint
+          // Calculate scale and repaint
+          this.scale = px2cnv(this.cnv, 0, 0)[2];
           this.repaint();
         });
     } catch (e) {

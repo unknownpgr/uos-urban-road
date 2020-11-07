@@ -22,8 +22,8 @@ async function initDB(database_file) {
     // Create a new database
     let db = await Database.open(database_file);
     // Drop tables
-    await db.run(`DROP TABLE users`);
-    await db.run(`DROP TABLE calibration`);
+    await db.run(`DROP TABLE IF EXISTS users`);
+    await db.run(`DROP TABLE IF EXISTS calibration`);
     // Create calibration table
     await db.run(table_calibration);
     // Create user table
