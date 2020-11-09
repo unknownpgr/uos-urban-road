@@ -91,6 +91,23 @@ function CalibrationInputForm(props) {
   );
 }
 
+function DataCell(props) {
+  let item = props.children;
+  let str;
+  if (typeof item == 'number') {
+    if (Number.isInteger(item)) {
+      str = item.toString();
+    } else {
+      str = ((Math.round(item * 10000) / 10000).toString() + '0000').substr(0, 6);
+    }
+  } else if (item instanceof Date) {
+    str = item.toLocaleDateString();
+  } else {
+    str = item.toString();
+  }
+  return <td>{str}</td>;
+}
+
 class CadCalibration {
   constructor(component, idx, label, useX = true) {
     this.idx = idx;
@@ -292,14 +309,15 @@ class CadViewer extends React.Component {
   }
 
   render() {
-
-    // Dummy data for demonstration
-    let dummy = [];
-    let date = Date.now();
-    for (let i = 0; i < 20; i++) {
-      let current = new Date(date + 3500 * i).toLocaleDateString();
-      dummy.push([i + 1, current, Math.random(), Math.random(), Math.random(), Math.random(), Math.random()]);
-    }
+    const dummy = [
+      [1, new Date('11/09/2020'), 0.02071, 0.21387, 0.50817, 0.47047, 0.53267],
+      [2, new Date('11/10/2020'), 0.66872, 0.92397, 0.11227, 0.56167, 0.42237],
+      [3, new Date('11/11/2020'), 0.68123, 0.82402, 0.18402, 0.18092, 0.90762],
+      [4, new Date('11/12/2020'), 0.68214, 0.79991, 0.80251, 0.32961, 0.43471],
+      [5, new Date('11/13/2020'), 0.24425, 0.25392, 0.83982, 0.14712, 0.66772],
+      [6, new Date('11/14/2020'), 0.97246, 0.08954, 0.74404, 0.55464, 0.76964],
+      [7, new Date('11/15/2020'), 0.28657, 0.20895, 0.96845, 0.08725, 0.29215],
+    ];
 
     return (
       <div className="cadViewer">
@@ -345,7 +363,7 @@ class CadViewer extends React.Component {
             </thead>
             <tbody>
               {dummy.map((row, i) => <tr key={i + 'i'}>
-                {row.map((item, j) => <td key={j + 'j'}>{item + ''}</td>)}
+                {row.map((item, j) => <DataCell key={j + 'j'}>{item}</DataCell>)}
               </tr>)}
             </tbody>
           </table>
