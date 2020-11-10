@@ -1,12 +1,30 @@
-import React from "react";
+import React, { useRef } from "react";
 import "./videoPlayer.scss";
 
-function VideoPlayer(props) {
+const INTERVAL_RETRY = 2000;
+const INTERVAL_REFRESH = 80;
+
+function VideoPlayer({ label, src }) {
+  let img = useRef(null);
+
+  function update() {
+    // Set current milisecond as param just to prevent caching.
+    if (img.current) setTimeout(() => img.current.src = src + '?hash=' + Date.now(), INTERVAL_REFRESH);
+    else setTimeout(update, INTERVAL_RETRY);
+  }
+
+  update();
+
   return <div className="videoPlayer">
-    <div className="inner">
-      <div>{props.label}</div>
-      {props.url ? '' : <div>Video source is not supplied.</div>}
+    <div className="label">
+      {label}
     </div>
+    {src ? <img
+      ref={img}
+      onLoad={update}
+      onError={() => setTimeout(update, INTERVAL_RETRY)}
+      alt="No stream available">
+    </img> : <div className="error">No video source supplied.</div>}
   </div>;
 }
 

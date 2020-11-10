@@ -7,7 +7,7 @@ function VideoViewer() {
     <tbody>
       <tr>
         <td></td><td>
-          <VideoPlayer label="top"></VideoPlayer>
+          <VideoPlayer label="top" src="/api/stream"></VideoPlayer>
         </td><td></td>
       </tr>
     </tbody>

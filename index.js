@@ -1,16 +1,29 @@
-// Import libraries
+// Import modules
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const loginSystem = require("./login");
+const multer = require('multer');
 const Database = require("sqlite-async");
+const loginSystem = require("./login");
+const path = require('path');
+const fs = require('fs').promises;
 
 const PORT = 1501;
+const STREAM_UPLOAD_PATH = path.join(__dirname, 'tmp');
+const STREAM_QUEUE_SIZE = 10;
 
 // Database will be assigned in the main function at bottom, before the server started.
 let db;
 
 const { login, logout, auth } = loginSystem();
+const upload = multer({ dest: STREAM_UPLOAD_PATH });
+let streamQueue = [];
+let streamLastUploaded = 0;
+
+async function clearStreamCache() {
+  const files = await fs.readdir(STREAM_UPLOAD_PATH);
+  for (const file of files) fs.unlink(path.join(STREAM_UPLOAD_PATH, file));
+}
 
 // Create web server
 let app = express();
@@ -41,7 +54,8 @@ app.use(auth);
 
 // Log all requests
 app.use((req, res, next) => {
-  console.log(new Date(), req.path);
+  if (!req.path.endsWith('stream'))
+    console.log(new Date(), req.path);
   next();
 });
 
@@ -75,7 +89,7 @@ app.get("/api/cads", (req, res) => {
   res.sendFile(__dirname + "/public/cad_config.json");
 });
 
-// Set pivot of an CAD file
+// Store pivot data of an CAD file
 app.post("/api/cali", async (req, res) => {
   try {
     let { img, data } = req.body;
@@ -97,6 +111,38 @@ app.get('/api/cali', async (req, res) => {
   res.send({ data });
 });
 
+// Upload stream
+app.post('/api/stream', upload.single('stream'), async (req, res) => {
+  let { path } = req.file;
+  if (!path) res.status(400).send({ err: 'No stream included in data' });
+  else {
+    // Buffer is used to prevent stream file being deleted while it is transmitting.
+    // Therefore, if the size of stream file is larege, or if there are many requests for stream,
+    // the buffer size should be increased.
+
+    streamQueue.push(path);                       // Push given stream into stream queue
+    if (streamQueue.length > STREAM_QUEUE_SIZE) { // If queue is full,
+      await fs.unlink(streamQueue.shift());       // remove the first(oldest) item
+    }
+    res.send({ data: 'OK' });                     // Then, send response
+    streamLastUploaded = Date.now();              // Update stream last uploaded time
+  }
+});
+
+// Get uploaded stream
+app.get('/api/stream', async (req, res) => {
+  if ((Date.now() - streamLastUploaded) > 3000) {
+    streamQueue = [];
+    await clearStreamCache();
+  }
+  if (streamQueue.length > 0) {
+    // Send the last item(newest) of the queue.
+    res.sendFile(streamQueue[streamQueue.length - 1]);
+  } else {
+    res.status(404).send({ err: 'No stream available' });
+  }
+});
+
 // 404 Route
 app.get("*", function (req, res) {
   res.status(404).send("Unknown api detected.");
@@ -104,7 +150,15 @@ app.get("*", function (req, res) {
 
 // Run server
 async function main() {
+  // Open database
   db = await Database.open("database.db");
+  console.log("Database connected.");
+
+  // Clear stream cache
+  await clearStreamCache();
+  console.log("Stream cache cleared.");
+
+  // Start server listening
   app.listen(PORT, () => {
     console.log("Server started at port " + PORT);
   });
