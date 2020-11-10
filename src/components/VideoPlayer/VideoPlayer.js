@@ -23,8 +23,8 @@ function VideoPlayer({ label, src }) {
       ref={img}
       onLoad={update}
       onError={() => setTimeout(update, INTERVAL_RETRY)}
-      alt="No stream available">
-    </img> : <div className="error">No video source supplied.</div>}
+      alt="Stream is not available now">
+    </img> : <div className="error">No stream source supplied.</div>}
   </div>;
 }
 
