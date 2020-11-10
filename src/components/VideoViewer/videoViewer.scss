@@ -1,3 +1,17 @@
-.videoViewer{
+.videoViewer {
   margin-top: 2rem;
+
+  @media (max-width: 1000px) {
+    width: 100%;
+
+    tr {
+      display: flex;
+      flex-direction: column;
+    }
+
+    td {
+      display: flex;
+      justify-content: center;
+    }
+  }
 }
