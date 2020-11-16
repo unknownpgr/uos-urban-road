@@ -9,7 +9,9 @@ function VideoPlayer({ label, src }) {
 
   function update() {
     // Set current milisecond as param just to prevent caching.
-    if (img.current) setTimeout(() => img.current.src = src + '?hash=' + Date.now(), INTERVAL_REFRESH);
+    if (img.current) setTimeout(() => {
+      if (img.current) img.current.src = src + '?hash=' + Date.now();
+    }, INTERVAL_REFRESH);
     else setTimeout(update, INTERVAL_RETRY);
   }
 
