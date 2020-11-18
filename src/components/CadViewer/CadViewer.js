@@ -3,6 +3,7 @@ import axios from "axios";
 import { Alert, ButtonGroup, Button, Modal, Form } from "react-bootstrap";
 import "./cadViewer.scss";
 import AppContext from "../Context/AppContext";
+import { add, inv, multiply, subtract, transpose } from "mathjs";
 
 async function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -119,6 +120,7 @@ class CadCalibration {
     this.label = label;
     this.component = component;
     this.useX = useX;
+    this.M = [[0, 0], [0, 0]];
 
     // Actually, this code is bad, because it directly modifies state of component, without calling setState.
     if (!(component.state.calibration)) component.state.calibration = {};
@@ -156,6 +158,41 @@ class CadCalibration {
   }
 }
 
+function getProjectionMatrix(pointA, pointB, flip = true) {
+  const ROTATATION = [
+    [0, 1, 0],
+    [-1, 0, 0],
+    [0, 0, 1],
+  ];
+
+  let img1 = [pointA.get('imgX'), pointA.get('imgY'), 1];
+  let img2 = [pointB.get('imgX'), pointB.get('imgY'), 1];
+  let img3 = add(img1, multiply(ROTATATION, subtract(img2, img1)));
+
+  let gps1 = [pointA.get('gpsX'), pointA.get('gpsY'), 1];
+  let gps2 = [pointB.get('gpsX'), pointB.get('gpsY'), 1];
+  let gps3;
+  if (!flip) {
+    gps3 = add(gps1, multiply(ROTATATION, subtract(gps2, gps1)));
+  } else {
+    gps3 = add(gps1, multiply(transpose(ROTATATION), subtract(gps2, gps1)));
+  }
+
+
+  let img = transpose([img1, img2, img3]);
+  let gps = transpose([gps1, gps2, gps3]);
+
+  let ii = inv(img);
+  let M = multiply(gps, ii);
+  console.log(M);
+  return M;
+}
+
+function project(M, x, y) {
+  let result = multiply(M, [[x], [y], [1]]);
+  return result;
+}
+
 class CadViewer extends React.Component {
   static contextType = AppContext;
 
@@ -179,21 +216,28 @@ class CadViewer extends React.Component {
       isInputVisible: false,
       menuX: 0,
       menuY: 0,
+      M: [[0, 0], [0, 0]]
     };
 
     // Array of calibration points
     this.imgX = 0;
     this.imgY = 0;
     this.points = [
-      new CadCalibration(this, 'Point A', 'Calibration point A'),
-      new CadCalibration(this, 'Point B', 'Calibration point B'),
-      new CadCalibration(this, 'Point C', 'Calibration point C', false),
-      new CadCalibration(this, 'Point D', 'Calibration point D', false),
+      new CadCalibration(this, 'Point A', '평면도 A'),
+      new CadCalibration(this, 'Point B', '평면도 B'),
+      new CadCalibration(this, 'Point C', '측면도 A', false),
+      new CadCalibration(this, 'Point D', '측면도 B', false),
     ];
   }
 
   repaint() {
     let { ctx, imgX: x, imgY: y, scale } = this;
+
+    if (ctx == null) return;
+    let isSet = true;
+    this.points.forEach(point => {
+      isSet &= point.isSet();
+    });
 
     // Draw CAD image
     ctx.clearRect(0, 0, this.cnv.width, this.cnv.height);
@@ -210,22 +254,37 @@ class CadViewer extends React.Component {
     // Draw mouse position text
     let fontSize = Math.round(scale * 15);
     ctx.font = fontSize + "px Ariel";
-    ctx.fillText(`X:${Math.round(x)}`, x + fontSize, y + fontSize * 1.5);
-    ctx.fillText(`Y:${Math.round(y)}`, x + fontSize, y + fontSize * 3);
+    if (isSet) {
+      let [gpsX, gpsY, c] = project(this.state.M, x, y);
+      ctx.fillText(`X:${Math.round(gpsX)}`, x + fontSize, y + fontSize * 1.5);
+      ctx.fillText(`Y:${Math.round(gpsY)}+${c}`, x + fontSize, y + fontSize * 3);
 
-    // Draw pivot
-    ctx.fillStyle = '#0000ff';
-    this.points.forEach(point => {
-      if (!point.isSet()) return;
-      let ix = point.get("imgX");
-      let iy = point.get("imgY");
-      ctx.beginPath();
-      ctx.moveTo(ix, iy);
-      ctx.lineTo(ix + 5, iy - 10);
-      ctx.lineTo(ix - 5, iy - 10);
-      ctx.fill();
-      ctx.fillText("(" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20);
-    });
+      // Draw pivot
+      ctx.fillStyle = '#0000ff';
+      this.points.forEach(point => {
+        let ix = point.get("imgX");
+        let iy = point.get("imgY");
+        ctx.beginPath();
+        ctx.moveTo(ix, iy);
+        ctx.lineTo(ix + 5, iy - 10);
+        ctx.lineTo(ix - 5, iy - 10);
+        ctx.fill();
+        ctx.fillText("(" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20);
+      });
+    } else {
+      ctx.fillStyle = '#800000';
+      this.points.forEach(point => {
+        if (!point.isSet()) return;
+        let ix = point.get("imgX");
+        let iy = point.get("imgY");
+        ctx.beginPath();
+        ctx.moveTo(ix, iy);
+        ctx.lineTo(ix + 5, iy - 10);
+        ctx.lineTo(ix - 5, iy - 10);
+        ctx.fill();
+        ctx.fillText(point.label + " (" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20);
+      });
+    }
   }
 
   onMouseLeftClick(event) {
@@ -268,7 +327,8 @@ class CadViewer extends React.Component {
   }
 
   onInputClosed() {
-    this.setState({ isInputVisible: false });
+    let M = getProjectionMatrix(this.points[0], this.points[1]);
+    this.setState({ isInputVisible: false, M });
     axios.post('/api/cali', { data: this.state.calibration, img: this.meta.img });
   }
 
@@ -284,10 +344,12 @@ class CadViewer extends React.Component {
       this.ctx = this.cnv.getContext("2d");
       this.ctx.lineWidth = 3;
 
+      let tempState = { ...this.state };
+
       // Load image
       let loadProc = loadImage("/img/cad/" + meta.img).then(img => {
         this.cadImg = img;
-        this.setState({ alertShow: false });
+        tempState.alertShow = false;
       });
 
       // Get calibration data
@@ -296,16 +358,17 @@ class CadViewer extends React.Component {
         .then((result) => {
           result.data.forEach(point => {
             Object.keys(point).forEach(key => {
-              this.state.calibration[point.idx][key] = point[key];
+              tempState.calibration[point.idx][key] = point[key];
             });
           });
+          tempState.M = getProjectionMatrix(this.points[0], this.points[1]);
         });
 
       Promise.all([loadProc, dataProc])
         .then(() => {
           // Calculate scale and repaint
           this.scale = px2cnv(this.cnv, 0, 0)[2];
-          this.repaint();
+          this.setState(tempState);
         });
     } catch (e) {
       this.setState({ alertShow: true, alertState: 'danger', alertStr: '데이터를 로드하던 중 에러가 발생했습니다.' });
@@ -314,6 +377,8 @@ class CadViewer extends React.Component {
   }
 
   render() {
+    this.repaint();
+
     const dummy = [
       [1, new Date('11/09/2020'), 0.02071, 0.21387, 0.50817, 0.47047, 0.53267],
       [2, new Date('11/10/2020'), 0.66872, 0.92397, 0.11227, 0.56167, 0.42237],
@@ -367,13 +432,13 @@ class CadViewer extends React.Component {
               </tr>
             </thead>
             <tbody>
-              {dummy.map((row, i) => <tr key={i + 'i'}>
+              {dummy.map((row, i) => <tr style={{ backgroundColor: ((i === 4) ? 'red' : 'none') }} key={i + 'i'}>
                 {row.map((item, j) => <DataCell key={j + 'j'}>{item}</DataCell>)}
               </tr>)}
             </tbody>
           </table>
         </div>
-      </div>
+      </div >
     );
   }
 }
