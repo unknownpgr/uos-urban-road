@@ -462,7 +462,7 @@ class CadViewer extends React.Component {
               </tr>
             </thead>
             <tbody>
-              {dummy.map((row, i) => <tr style={{ backgroundColor: ((i === 4) ? 'red' : 'none') }} key={i + 'i'}>
+              {dummy.map((row, i) => <tr style={{ backgroundColor: ((row[6] < 0.5) ? 'red' : 'none') }} key={i + 'i'}>
                 {row.map((item, j) => <DataCell key={j + 'j'}>{item}</DataCell>)}
               </tr>)}
             </tbody>
