@@ -85,29 +85,37 @@ app.get("/api/username", (req, res) => {
 });
 
 // Get CAD file metadata
-app.get("/api/cads", (req, res) => {
-  res.sendFile(__dirname + "/public/cad_config.json");
+app.get("/api/sections", async (req, res) => {
+  let { user } = req;
+  if (user == null) {
+    res.status(401).send({ data: "Dummy", err: "You are not logged in." });
+    return;
+  }
+  let station = await db.get(`SELECT station FROM users WHERE id=?`, [user.id]);
+  let sections = await db.all(`SELECT * FROM sections WHERE station=?`, [station.station]);
+  res.send({ ...station, sections });
 });
 
-// Store pivot data of an CAD file
+// Store pivot data of an station
 app.post("/api/cali", async (req, res) => {
   try {
-    let { img, data } = req.body;
+    let { data, station, section } = req.body;
     let keys = Object.keys(data);
     await db.transaction(db =>
       Promise.all(keys.map(key => {
         let row = data[key];
-        return db.run(`REPLACE INTO calibration (cad, idx, imgX, imgY, gpsX, gpsY) VALUES (?, ?, ?, ?, ?, ?);`,
-          [img, key, row.imgX, row.imgY, row.gpsX, row.gpsY]);
+        return db.run(`INSERT OR REPLACE INTO calibration (station, section, idx, imgX, imgY, gpsX, gpsY) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+          [station, section, row.idx, row.imgX, row.imgY, row.gpsX, row.gpsY]);
       }))
     );
     res.status(201).send({});
   } catch (err) { res.status(400).send({ err }); }
 });
 
-// Get pivots of an CAD file
+// Get pivots of an station
 app.get('/api/cali', async (req, res) => {
-  let data = await db.all('SELECT * FROM calibration WHERE cad=?', [req.query.img]);
+  let { station, section } = req.query;
+  let data = await db.all('SELECT * FROM calibration WHERE station=? AND section=?', [station, section]);
   res.send({ data });
 });
 

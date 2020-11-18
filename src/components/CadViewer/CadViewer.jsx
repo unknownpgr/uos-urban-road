@@ -9,7 +9,8 @@ import { CalibrationInputForm } from "./CalibrationInputForm";
 import { DataCell } from "./DataCell";
 import { isSet, getCali, setter } from "./calibration";
 
-const forDict = (dict, lambda) => Object.keys(dict).forEach((key, i) => lambda(key, dict[key], i));
+const forDict = (dict, lambda) =>
+  Object.keys(dict).forEach((key, i) => lambda(key, dict[key], i));
 
 async function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -30,6 +31,9 @@ function px2cnv(cnv, x, y) {
 }
 
 function getProjectionMatrix(pointA, pointB, flip = true) {
+  if (!isSet(pointA) || !isSet(pointB))
+    return [[0, 0, 0], [0, 0, 0][(0, 0, 0)]];
+
   const ROTATATION = [
     [0, 1, 0],
     [-1, 0, 0],
@@ -49,7 +53,6 @@ function getProjectionMatrix(pointA, pointB, flip = true) {
     gps3 = add(gps1, multiply(transpose(ROTATATION), subtract(gps2, gps1)));
   }
 
-
   let img = transpose([img1, img2, img3]);
   let gps = transpose([gps1, gps2, gps3]);
 
@@ -63,12 +66,20 @@ function project(M, x, y) {
   return result;
 }
 
-function drawBoxedText(ctx, lines, x, y, margin = 0.5, left = false, back = '#000', fore = '#fff') {
-
+function drawBoxedText(
+  ctx,
+  lines,
+  x,
+  y,
+  margin = 0.5,
+  left = false,
+  back = "#000",
+  fore = "#fff"
+) {
   // Calculate text width, height
   let width = 0;
   let height = 0;
-  lines.forEach(line => {
+  lines.forEach((line) => {
     let size = ctx.measureText(line);
     width = Math.max(size.width);
     height = Math.max(height, size.actualBoundingBoxAscent);
@@ -77,7 +88,12 @@ function drawBoxedText(ctx, lines, x, y, margin = 0.5, left = false, back = '#00
 
   // Draw box
   ctx.fillStyle = back;
-  ctx.fillRect(x, y, width + margin * 2, (height + margin) * lines.length + margin);
+  ctx.fillRect(
+    x,
+    y,
+    width + margin * 2,
+    (height + margin) * lines.length + margin
+  );
 
   // Draw text
   ctx.fillStyle = fore;
@@ -107,14 +123,17 @@ class CadViewer extends React.Component {
       isInputVisible: false,
       menuX: 0,
       menuY: 0,
-      M: [[0, 0], [0, 0]],
+      M: [
+        [0, 0],
+        [0, 0],
+      ],
       cali: {
-        'Point A': getCali('Point A', 'A'),
-        'Point B': getCali('Point B', 'B'),
-        'Point C': getCali('Point C', 'C', false),
-        'Point D': getCali('Point D', 'D', false),
+        "Point A": getCali("Point A", "A"),
+        "Point B": getCali("Point B", "B"),
+        "Point C": getCali("Point C", "C", false),
+        "Point D": getCali("Point D", "D", false),
       },
-      selectedPoint: null
+      selectedPoint: null,
     };
 
     // Array of calibration points
@@ -155,7 +174,7 @@ class CadViewer extends React.Component {
       let [gpsX, gpsY] = project(this.state.M, x, y);
 
       // Draw pivot
-      ctx.fillStyle = '#0000ff';
+      ctx.fillStyle = "#0000ff";
       forDict(this.state.cali, (key, point) => {
         let ix = point.imgX;
         let iy = point.imgY;
@@ -168,9 +187,14 @@ class CadViewer extends React.Component {
       });
 
       // Draw cursor text
-      drawBoxedText(ctx, [`X:${Math.round(gpsX)}`, `Y:${Math.round(gpsY)}`], x, y);
+      drawBoxedText(
+        ctx,
+        [`X:${Math.round(gpsX)}`, `Y:${Math.round(gpsY)}`],
+        x,
+        y
+      );
     } else {
-      ctx.fillStyle = '#800000';
+      ctx.fillStyle = "#800000";
       forDict(this.state.cali, (key, point) => {
         if (!isSet(point)) return;
         let ix = point.imgX;
@@ -180,7 +204,13 @@ class CadViewer extends React.Component {
         ctx.lineTo(ix + 5, iy - 10);
         ctx.lineTo(ix - 5, iy - 10);
         ctx.fill();
-        drawBoxedText(ctx, [point.label + " (" + point.gpsX + "," + point.gpsY + ")"], ix - 10, iy + 10, 0.1);
+        drawBoxedText(
+          ctx,
+          [point.label + " (" + point.gpsX + "," + point.gpsY + ")"],
+          ix - 10,
+          iy + 10,
+          0.1
+        );
       });
     }
   }
@@ -204,7 +234,8 @@ class CadViewer extends React.Component {
   }
 
   onMouseMove(event) {
-    if (!(this.ctx && this.cnv && this.cadImg) || this.state.isMenuVisible) return;
+    if (!(this.ctx && this.cnv && this.cadImg) || this.state.isMenuVisible)
+      return;
 
     // Get mouse position in pixel
     let [x, y, scale] = px2cnv(this.cnv, event.clientX, event.clientY);
@@ -225,52 +256,64 @@ class CadViewer extends React.Component {
   }
 
   onInputClosed() {
-    let M = getProjectionMatrix(this.state.cali['Point A'], this.state.cali['Point B']);
+    let M = getProjectionMatrix(
+      this.state.cali["Point A"],
+      this.state.cali["Point B"]
+    );
     this.setState({ isInputVisible: false, M });
-    axios.post('/api/cali', { data: this.state.cali, img: this.meta.img });
+    axios.post("/api/cali", { data: this.state.cali, ...this.section });
   }
 
   componentDidMount() {
     try {
       // Get metadata
-      let meta = this.props.data;
-      this.meta = meta;
+      this.section = this.props.data;
+      let { width, height, cad_file, station, section } = this.props.data;
 
       // Set canvas
-      this.cnv.width = meta.w;
-      this.cnv.height = meta.h;
+      this.cnv.width = width;
+      this.cnv.height = height;
       this.ctx = this.cnv.getContext("2d");
       this.ctx.lineWidth = 3;
 
       let tempState = { ...this.state };
 
       // Load image
-      let loadProc = loadImage("/img/cad/" + meta.img).then(img => {
+      let loadProc = loadImage("/img/cad/" + cad_file).then((img) => {
         this.cadImg = img;
         tempState.alertShow = false;
       });
 
       // Get calibration data
-      let dataProc = axios.get('/api/cali?img=' + meta.img)
-        .then(x => x.data)
+      let dataProc = axios
+        .get(
+          `/api/cali?station=${station}&section=${encodeURIComponent(section)}`
+        )
+        .then((x) => x.data)
         .then((result) => {
-          result.data.forEach(point => {
+          result.data.forEach((point) => {
             forDict(point, (key, value) => {
               tempState.cali[point.idx][key] = value;
             });
           });
-          tempState.M = getProjectionMatrix(this.state.cali['Point A'], this.state.cali['Point B']);
+          tempState.M = getProjectionMatrix(
+            this.state.cali["Point A"],
+            this.state.cali["Point B"]
+          );
         });
 
-      Promise.all([loadProc, dataProc])
-        .then(() => {
-          // Calculate scale and repaint
-          if (!this.cnv) return;
-          this.scale = px2cnv(this.cnv, 0, 0)[2];
-          this.setState(tempState);
-        });
+      Promise.all([loadProc, dataProc]).then(() => {
+        // Calculate scale and repaint
+        if (!this.cnv) return;
+        this.scale = px2cnv(this.cnv, 0, 0)[2];
+        this.setState(tempState);
+      });
     } catch (e) {
-      this.setState({ alertShow: true, alertState: 'danger', alertStr: '데이터를 로드하던 중 에러가 발생했습니다.' });
+      this.setState({
+        alertShow: true,
+        alertState: "danger",
+        alertStr: "데이터를 로드하던 중 에러가 발생했습니다.",
+      });
       console.error(e);
     }
   }
@@ -279,13 +322,13 @@ class CadViewer extends React.Component {
     this.repaint();
 
     const dummy = [
-      [1, new Date('11/09/2020'), 0.02071, 0.21387, 0.50817, 0.47047, 0.53267],
-      [2, new Date('11/10/2020'), 0.66872, 0.92397, 0.11227, 0.56167, 0.42237],
-      [3, new Date('11/11/2020'), 0.68123, 0.82402, 0.18402, 0.18092, 0.90762],
-      [4, new Date('11/12/2020'), 0.68214, 0.79991, 0.80251, 0.32961, 0.43471],
-      [5, new Date('11/13/2020'), 0.24425, 0.25392, 0.83982, 0.14712, 0.66772],
-      [6, new Date('11/14/2020'), 0.97246, 0.08954, 0.74404, 0.55464, 0.76964],
-      [7, new Date('11/15/2020'), 0.28657, 0.20895, 0.96845, 0.08725, 0.29215],
+      [1, new Date("11/09/2020"), 0.02071, 0.21387, 0.50817, 0.47047, 0.53267],
+      [2, new Date("11/10/2020"), 0.66872, 0.92397, 0.11227, 0.56167, 0.42237],
+      [3, new Date("11/11/2020"), 0.68123, 0.82402, 0.18402, 0.18092, 0.90762],
+      [4, new Date("11/12/2020"), 0.68214, 0.79991, 0.80251, 0.32961, 0.43471],
+      [5, new Date("11/13/2020"), 0.24425, 0.25392, 0.83982, 0.14712, 0.66772],
+      [6, new Date("11/14/2020"), 0.97246, 0.08954, 0.74404, 0.55464, 0.76964],
+      [7, new Date("11/15/2020"), 0.28657, 0.20895, 0.96845, 0.08725, 0.29215],
     ];
 
     return (
@@ -307,7 +350,8 @@ class CadViewer extends React.Component {
           style={{ opacity: this.state.alertShow ? 0.9 : 0 }}
           variant={this.state.alertState}
           className="alert m-2"
-        >{this.state.alertStr}
+        >
+          {this.state.alertStr}
         </Alert>
         <canvas
           ref={(cnv) => {
@@ -322,23 +366,30 @@ class CadViewer extends React.Component {
           <table>
             <thead>
               <tr>
-                <th scope='col'>#</th>
-                <th scope='col'>Date</th>
-                <th scope='col'>Long</th>
-                <th scope='col'>Lat</th>
-                <th scope='col'>MaxLoad(kN)</th>
-                <th scope='col'>MaxDis(mm)</th>
-                <th scope='col'>E-Inverse</th>
+                <th scope="col">#</th>
+                <th scope="col">Date</th>
+                <th scope="col">Long</th>
+                <th scope="col">Lat</th>
+                <th scope="col">MaxLoad(kN)</th>
+                <th scope="col">MaxDis(mm)</th>
+                <th scope="col">E-Inverse</th>
               </tr>
             </thead>
             <tbody>
-              {dummy.map((row, i) => <tr style={{ backgroundColor: ((row[6] < 0.5) ? 'red' : 'none') }} key={i + 'i'}>
-                {row.map((item, j) => <DataCell key={j + 'j'}>{item}</DataCell>)}
-              </tr>)}
+              {dummy.map((row, i) => (
+                <tr
+                  style={{ backgroundColor: row[6] < 0.5 ? "red" : "none" }}
+                  key={i + "i"}
+                >
+                  {row.map((item, j) => (
+                    <DataCell key={j + "j"}>{item}</DataCell>
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div >
+      </div>
     );
   }
 }

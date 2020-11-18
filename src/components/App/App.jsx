@@ -6,28 +6,7 @@ import { Navbar, Nav, Button, Container } from "react-bootstrap";
 import CadViewer from "../CadViewer/CadViewer";
 import VideoViewer from "../VideoViewer/VideoViewer";
 import "./app.scss";
-
-class Clock extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { time: (new Date() + "").substring(0, 24) };
-    this.intervalKey = 0;
-  }
-
-  componentDidMount() {
-    this.intervalKey = setInterval(() =>
-      this.setState({ time: (new Date() + "").substring(0, 24) })
-    );
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.intervalKey);
-  }
-
-  render() {
-    return this.state.time;
-  }
-}
+import { Clock } from "./Clock";
 
 class App extends React.Component {
   static contextType = AppContext;
@@ -38,7 +17,7 @@ class App extends React.Component {
     this.state = {
       username: "",
       tab: "view",
-      cads: [],
+      sections: [],
     };
 
     this.logout = this.logout.bind(this);
@@ -49,8 +28,11 @@ class App extends React.Component {
     this.setState({ tab });
 
     // Get username
-    axios.get("/api/username?token=" + this.context.token)
-      .then((res) => { this.setState({ username: res.data.data }); })
+    axios
+      .get("/api/username?token=" + this.context.token)
+      .then((res) => {
+        this.setState({ username: res.data.data });
+      })
       .catch((err) => {
         console.log(err);
         this.context.setToken(undefined);
@@ -58,17 +40,21 @@ class App extends React.Component {
         // this.setState({ username: err.response.data.data });
       });
 
-    // Get cad file list
-    axios.get("/api/cads")
-      .then((res) => {
-        if (res.data) { this.setState({ cads: res.data }); }
-      });
+    // Get station list
+    axios.get("/api/sections?token=" + this.context.token).then((res) => {
+      if (res.data) {
+        this.setState({ ...res.data });
+      }
+    });
   }
 
   logout() {
-    axios.post("/api/logout?token=" + this.context.token)
-      .then(() => { this.context.setToken(undefined); })
-      .catch(err => {
+    axios
+      .post("/api/logout?token=" + this.context.token)
+      .then(() => {
+        this.context.setToken(undefined);
+      })
+      .catch((err) => {
         console.log(err);
       });
   }
@@ -79,9 +65,9 @@ class App extends React.Component {
 
     let tabs = [];
     let routes = [];
-    Object.keys(this.state.cads).forEach((cad, i) => {
+    this.state.sections.forEach((section, i) => {
       // Make tabs from CAD file data
-      let tabName = cad.replace(".pdf", "");
+      let tabName = section.section;
       let href = `/cads/${tabName}`;
       let tab = (
         <Nav.Item key={i}>
@@ -95,7 +81,7 @@ class App extends React.Component {
       // Make routes associated to tab
       let route = (
         <Route path={href} key={i}>
-          <CadViewer file={cad} data={this.state.cads[cad]}></CadViewer>
+          <CadViewer data={section}></CadViewer>
         </Route>
       );
       routes.push(route);
@@ -116,18 +102,21 @@ class App extends React.Component {
             </Navbar.Brand>
             <Navbar.Brand>토공다짐도 자동화시스템</Navbar.Brand>
           </span>
-          <Navbar.Text><Clock /></Navbar.Text>
+          <Navbar.Text>
+            <Clock />
+          </Navbar.Text>
           <span>
             <Navbar.Text className="mr-2">
               You are logged in as {this.state.username}
             </Navbar.Text>
-            <Button className="btn-secondary" onClick={this.logout}>Logout</Button>
+            <Button className="btn-secondary" onClick={this.logout}>
+              Logout
+            </Button>
           </span>
         </Navbar>
 
         {/* Main container */}
         <Container className="mt-4 mainContainer">
-
           {/* Horizontal Navigation */}
           <Nav
             variant="tabs"
