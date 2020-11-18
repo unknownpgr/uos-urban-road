@@ -1,5 +1,5 @@
 import React from "react";
-import VideoPlayer from "../VideoPlayer/VideoPlayer";
+import VideoPlayer from "./VideoPlayer/VideoPlayer";
 import "./videoViewer.scss";
 
 function VideoViewer() {
