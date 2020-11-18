@@ -7,9 +7,9 @@ CREATE TABLE stations (
 
 let table_sections = `
 CREATE TABLE sections (
-    station     TEXT NOT NULL,
-    section     TEXT NOT NULL,
-    cad_file    TEXT NOT NULL UNIQUE,
+    station     TEXT    NOT NULL,
+    section     TEXT    NOT NULL,
+    cad_file    TEXT    NOT NULL UNIQUE,
     width       INTEGER NOT NULL,        
     height      INTEGER NOT NULL,
     FOREIGN KEY(station) REFERENCES stations(station)
@@ -18,8 +18,8 @@ CREATE TABLE sections (
 
 let table_calibration = `
 CREATE TABLE calibration (
-    station TEXT NOT NULL,
-    section TEXT NOT NULL,
+    station TEXT    NOT NULL,
+    section TEXT    NOT NULL,
     idx     INTEGER NOT NULL,
     imgX    INTEGER,
     imgY    INTEGER,
@@ -31,12 +31,12 @@ CREATE TABLE calibration (
 
 let table_sensor_data = `
 CREATE TABLE sensor_data (
-    date        TEXT NOT NULL UNIQUE,
-    long        REAL NOT NULL,
-    lat         REAL NOT NULL,
-    max_load    REAL NOT NULL,
-    max_dist    REAL NOT NULL,
-    e_inv       REAL NOT NULL
+    date        INTEGER NOT NULL UNIQUE,
+    long        REAL    NOT NULL,
+    lat         REAL    NOT NULL,
+    max_load    REAL    NOT NULL,
+    max_dist    REAL    NOT NULL,
+    e_inv       REAL    NOT NULL
 );`;
 
 let table_user = `;
@@ -77,6 +77,22 @@ async function initDB(database_file) {
     // Insert test user
     await db.run(`INSERT INTO users(id, pw, station) VALUES("road1","road1","포천방향")`);
     console.log(await db.all('SELECT * FROM users'));
+
+    // Insert test sensor data
+    let promises = [
+        ["11/09/2020", 0.02071, 0.21387, 0.50817, 0.47047, 0.53267],
+        ["11/10/2020", 0.66872, 0.92397, 0.11227, 0.56167, 0.42237],
+        ["11/11/2020", 0.68123, 0.82402, 0.18402, 0.18092, 0.90762],
+        ["11/12/2020", 0.68214, 0.79991, 0.80251, 0.32961, 0.43471],
+        ["11/13/2020", 0.24425, 0.25392, 0.83982, 0.14712, 0.66772],
+        ["11/14/2020", 0.97246, 0.08954, 0.74404, 0.55464, 0.76964],
+        ["11/15/2020", 0.28657, 0.20895, 0.96845, 0.08725, 0.29215],
+    ].map(row => {
+        row[0] = Math.floor(new Date(row[0]).getTime() / 1000);
+        return db.run(`INSERT INTO sensor_data VALUES(?,?,?,?,?,?)`, row);
+    });
+    await Promise.all(promises);
+    console.log(await db.all(`SELECT * FROM sensor_data`));
 
     console.log('Database successfully initialized.');
 }

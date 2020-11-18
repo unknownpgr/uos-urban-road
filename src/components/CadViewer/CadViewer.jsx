@@ -134,6 +134,7 @@ class CadViewer extends React.Component {
         "Point D": getCali("Point D", "D", false),
       },
       selectedPoint: null,
+      sensorData: [],
     };
 
     // Array of calibration points
@@ -195,7 +196,7 @@ class CadViewer extends React.Component {
       );
     } else {
       ctx.fillStyle = "#800000";
-      forDict(this.state.cali, (key, point) => {
+      forDict(this.state.cali, (_, point) => {
         if (!isSet(point)) return;
         let ix = point.imgX;
         let iy = point.imgY;
@@ -264,7 +265,7 @@ class CadViewer extends React.Component {
     axios.post("/api/cali", { data: this.state.cali, ...this.section });
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     try {
       // Get metadata
       this.section = this.props.data;
@@ -302,12 +303,33 @@ class CadViewer extends React.Component {
           );
         });
 
-      Promise.all([loadProc, dataProc]).then(() => {
-        // Calculate scale and repaint
-        if (!this.cnv) return;
-        this.scale = px2cnv(this.cnv, 0, 0)[2];
-        this.setState(tempState);
-      });
+      await Promise.all([loadProc, dataProc]);
+      // Calculate scale and repaint
+      if (!this.cnv) return;
+      this.scale = px2cnv(this.cnv, 0, 0)[2];
+      this.setState(tempState);
+
+      if (!this.isPivotSet()) return;
+      let [xs, ys] = project(this.state.M, 0, 0);
+      let [xe, ye] = project(this.state.M, width, height / 2);
+      axios
+        .get("/api/data", {
+          params: {
+            xs: xs[0],
+            ys: ys[0],
+            xe: xe[0],
+            ye: ye[0],
+          },
+        })
+        .then((x) => x.data)
+        .then((data) => {
+          let sensorData = [];
+          data.forEach((row, i) => {
+            row.date = new Date(row.date * 1000);
+            sensorData.push([i + 1, ...Object.keys(row).map((x) => row[x])]);
+          });
+          this.setState({ sensorData });
+        });
     } catch (e) {
       this.setState({
         alertShow: true,
@@ -320,17 +342,6 @@ class CadViewer extends React.Component {
 
   render() {
     this.repaint();
-
-    const dummy = [
-      [1, new Date("11/09/2020"), 0.02071, 0.21387, 0.50817, 0.47047, 0.53267],
-      [2, new Date("11/10/2020"), 0.66872, 0.92397, 0.11227, 0.56167, 0.42237],
-      [3, new Date("11/11/2020"), 0.68123, 0.82402, 0.18402, 0.18092, 0.90762],
-      [4, new Date("11/12/2020"), 0.68214, 0.79991, 0.80251, 0.32961, 0.43471],
-      [5, new Date("11/13/2020"), 0.24425, 0.25392, 0.83982, 0.14712, 0.66772],
-      [6, new Date("11/14/2020"), 0.97246, 0.08954, 0.74404, 0.55464, 0.76964],
-      [7, new Date("11/15/2020"), 0.28657, 0.20895, 0.96845, 0.08725, 0.29215],
-    ];
-
     return (
       <div className="cadViewer">
         <ClickMenu
@@ -371,12 +382,12 @@ class CadViewer extends React.Component {
                 <th scope="col">Long</th>
                 <th scope="col">Lat</th>
                 <th scope="col">MaxLoad(kN)</th>
-                <th scope="col">MaxDis(mm)</th>
+                <th scope="col">MaxDist(mm)</th>
                 <th scope="col">E-Inverse</th>
               </tr>
             </thead>
             <tbody>
-              {dummy.map((row, i) => (
+              {this.state.sensorData.map((row, i) => (
                 <tr
                   style={{ backgroundColor: row[6] < 0.5 ? "red" : "none" }}
                   key={i + "i"}

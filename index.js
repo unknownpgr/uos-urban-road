@@ -151,6 +151,26 @@ app.get('/api/stream', async (req, res) => {
   }
 });
 
+app.get('/api/data', async (req, res) => {
+  let { xs, xe, ys, ye } = req.query;
+
+  // Swap data
+  if (xe < xs) {
+    let t = xe;
+    xe = xs;
+    xs = t;
+  }
+  if (ye < ys) {
+    let t = ye;
+    ye = ys;
+    ys = t;
+  }
+
+  // Select data in range
+  let data = await db.all(`SELECT * FROM sensor_data WHERE ? < long AND long < ? AND ? < lat AND lat < ?`, [xs, xe, ys, ye]);
+  res.send(data);
+});
+
 // 404 Route
 app.get("*", function (req, res) {
   res.status(404).send("Unknown api detected.");
