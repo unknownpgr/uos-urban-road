@@ -9,25 +9,30 @@ function VideoPlayer({ label, src }) {
 
   function update() {
     // Set current milisecond as param just to prevent caching.
-    if (img.current) setTimeout(() => {
-      if (img.current) img.current.src = src + '?hash=' + Date.now();
-    }, INTERVAL_REFRESH);
+    if (img.current)
+      setTimeout(() => {
+        if (img.current) img.current.src = src + "?hash=" + Date.now();
+      }, INTERVAL_REFRESH);
     else setTimeout(update, INTERVAL_RETRY);
   }
 
   update();
 
-  return <div className="videoPlayer">
-    <div className="label">
-      {label}
+  return (
+    <div className="videoPlayer">
+      <div className="label">{label}</div>
+      {src ? (
+        <img
+          ref={img}
+          onLoad={update}
+          onError={() => setTimeout(update, INTERVAL_RETRY)}
+          alt="Stream is not available now"
+        ></img>
+      ) : (
+        <div className="error">No stream source supplied.</div>
+      )}
     </div>
-    {src ? <img
-      ref={img}
-      onLoad={update}
-      onError={() => setTimeout(update, INTERVAL_RETRY)}
-      alt="Stream is not available now">
-    </img> : <div className="error">No stream source supplied.</div>}
-  </div>;
+  );
 }
 
 export default VideoPlayer;
