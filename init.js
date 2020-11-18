@@ -31,7 +31,7 @@ CREATE TABLE calibration (
 
 let table_sensor_data = `
 CREATE TABLE sensor_data (
-    date        INTEGER NOT NULL UNIQUE,
+    date        INTEGER PRIMARY KEY,
     long        REAL    NOT NULL,
     lat         REAL    NOT NULL,
     max_load    REAL    NOT NULL,
