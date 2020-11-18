@@ -1,12 +1,15 @@
 import React from "react";
 import axios from "axios";
-import { Alert, ButtonGroup, Button, Modal, Form } from "react-bootstrap";
+import { Alert } from "react-bootstrap";
 import "./cadViewer.scss";
 import AppContext from "../Context/AppContext";
 import { add, inv, multiply, subtract, transpose } from "mathjs";
+import { ClickMenu } from "./ClickMenu";
+import { CalibrationInputForm } from "./CalibrationInputForm";
+import { DataCell } from "./DataCell";
+import { isSet, getCali, setter } from "./calibration";
 
 const forDict = (dict, lambda) => Object.keys(dict).forEach((key, i) => lambda(key, dict[key], i));
-const mapDict = (dict, lambda) => Object.keys(dict).map((key, i) => lambda(key, dict[key], i));
 
 async function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -24,98 +27,6 @@ function px2cnv(cnv, x, y) {
   let x_ = (x - rect.left) * scaleX;
   let y_ = (y - rect.top) * scaleY;
   return [x_, y_, scaleX, scaleY];
-}
-
-function ClickMenu(props) {
-  console.log(props);
-
-  return (
-    <ButtonGroup
-      vertical
-      className="clickMenu"
-      style={{
-        display: props.show ? undefined : "none",
-        left: props.x,
-        top: props.y,
-      }}>
-      {mapDict(props.points, (key, point, i) => (
-        <Button
-          onClick={() => props.onClick(point)}
-          key={i}
-          variant={isSet(point) ? "success" : "primary"}>
-          {point.label}
-        </Button>
-      ))}
-    </ButtonGroup>
-  );
-}
-
-function LabeledInput({ label, value, setValue }) {
-  return (
-    <Form.Group>
-      <Form.Label>{label}</Form.Label>
-      <Form.Control
-        onChange={e => setValue(e.target.value)}
-        value={value}
-        type='number'
-      ></Form.Control>
-    </Form.Group>
-  );
-}
-
-function CalibrationInputForm({ point, setter, show, onSave }) {
-  if (!point) return <></>;
-  return (
-    <Modal show={show} >
-      <Modal.Header>
-        <Modal.Title>캘리브레이션 {point?.label} 세팅</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form>
-          {point?.useX ?
-            <LabeledInput
-              label='X'
-              value={point.gpsX}
-              setValue={setter('gpsX')}
-            >
-            </LabeledInput> : undefined}
-          <LabeledInput
-            label='Y'
-            value={point.gpsY}
-            setValue={setter('gpsY')}
-          >
-          </LabeledInput>
-        </Form>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="primary" onClick={onSave}>
-          저장
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
-}
-
-function DataCell(props) {
-  // Return properly formatted data wrapped with <td>
-  let item = props.children;
-  let str;
-  if (typeof item == 'number') {
-    if (Number.isInteger(item)) {
-      // If integer, just convert to string.
-      str = item.toString();
-    } else {
-      // If float, round to four decimal place.
-      str = (item.toString() + '0000').substr(0, 6);
-    }
-  } else if (item instanceof Date) {
-    // If date, convert to local date string
-    str = item.toLocaleDateString();
-  } else {
-    // Else, just convert to string.
-    str = item.toString();
-  }
-  return <td>{str}</td>;
 }
 
 function getProjectionMatrix(pointA, pointB, flip = true) {
@@ -174,33 +85,6 @@ function drawBoxedText(ctx, lines, x, y, margin = 0.5, left = false, back = '#00
     ctx.fillText(line, x + margin, y + (margin + height) * (i + 1));
   });
 }
-
-function getCali(idx, label, useX = true) {
-  return {
-    idx,
-    label,
-    useX,
-    imgX: 0,
-    imgY: 0,
-    gpsX: 0,
-    gpsY: 0,
-  };
-}
-
-function isSet(point) {
-  if (point.useX) {
-    return point.gpsX * point.gpsY > 0;
-  } else {
-    return point.gpsY > 0;
-  }
-}
-
-// Higher-order function.
-const setter = (component, point) => (key) => (value) => component.setState(state => {
-  let newState = { ...state };
-  newState.cali[point.idx][key] = value;
-  return newState;
-});
 
 class CadViewer extends React.Component {
   static contextType = AppContext;
