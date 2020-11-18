@@ -5,6 +5,9 @@ import "./cadViewer.scss";
 import AppContext from "../Context/AppContext";
 import { add, inv, multiply, subtract, transpose } from "mathjs";
 
+const forDict = (dict, lambda) => Object.keys(dict).forEach((key, i) => lambda(key, dict[key], i));
+const mapDict = (dict, lambda) => Object.keys(dict).map((key, i) => lambda(key, dict[key], i));
+
 async function loadImage(src) {
   return new Promise((resolve, reject) => {
     let img = new Image();
@@ -24,6 +27,8 @@ function px2cnv(cnv, x, y) {
 }
 
 function ClickMenu(props) {
+  console.log(props);
+
   return (
     <ButtonGroup
       vertical
@@ -33,11 +38,11 @@ function ClickMenu(props) {
         left: props.x,
         top: props.y,
       }}>
-      {props.points?.map((point, i) => (
+      {mapDict(props.points, (key, point, i) => (
         <Button
           onClick={() => props.onClick(point)}
           key={i}
-          variant={point.isSet() ? "success" : "primary"}>
+          variant={isSet(point) ? "success" : "primary"}>
           {point.label}
         </Button>
       ))}
@@ -45,24 +50,23 @@ function ClickMenu(props) {
   );
 }
 
-function LabeledInput(props) {
-  let { label, value, setValue } = props;
+function LabeledInput({ label, value, setValue }) {
   return (
     <Form.Group>
       <Form.Label>{label}</Form.Label>
       <Form.Control
         onChange={e => setValue(e.target.value)}
-        value={value()}
+        value={value}
         type='number'
       ></Form.Control>
     </Form.Group>
   );
 }
 
-function CalibrationInputForm(props) {
-  let point = props.point;
+function CalibrationInputForm({ point, setter, show, onSave }) {
+  if (!point) return <></>;
   return (
-    <Modal show={props.show} >
+    <Modal show={show} >
       <Modal.Header>
         <Modal.Title>캘리브레이션 {point?.label} 세팅</Modal.Title>
       </Modal.Header>
@@ -71,20 +75,20 @@ function CalibrationInputForm(props) {
           {point?.useX ?
             <LabeledInput
               label='X'
-              value={point?.getGetter('gpsX')}
-              setValue={point?.getSetter('gpsX')}
+              value={point.gpsX}
+              setValue={setter('gpsX')}
             >
             </LabeledInput> : undefined}
           <LabeledInput
             label='Y'
-            value={point?.getGetter('gpsY')}
-            setValue={point?.getSetter('gpsY')}
+            value={point.gpsY}
+            setValue={setter('gpsY')}
           >
           </LabeledInput>
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="primary" onClick={props.onSave}>
+        <Button variant="primary" onClick={onSave}>
           저장
         </Button>
       </Modal.Footer>
@@ -114,50 +118,6 @@ function DataCell(props) {
   return <td>{str}</td>;
 }
 
-class CadCalibration {
-  constructor(component, idx, label, useX = true) {
-    this.idx = idx;
-    this.label = label;
-    this.component = component;
-    this.useX = useX;
-    this.M = [[0, 0], [0, 0]];
-
-    // Actually, this code is bad, because it directly modifies state of component, without calling setState.
-    if (!(component.state.calibration)) component.state.calibration = {};
-    component.state.calibration[idx] = {
-      idx,
-      label,
-      imgX: 0,
-      imgY: 0,
-      gpsX: 0,
-      gpsY: 0,
-    };
-  }
-
-  get(propertyName) {
-    return this.component.state.calibration[this.idx][propertyName];
-  }
-
-  set(propertyName, newValue) {
-    let { calibration } = this.component.state;     // Get state
-    calibration[this.idx][propertyName] = newValue; // Update state
-    this.component.setState({ calibration });       // Set updated state with re-rendering
-  }
-
-  getGetter(propertyName) {
-    return () => this.get(propertyName);
-  }
-
-  getSetter(propertyName) {
-    return (newValue) => this.set(propertyName, newValue);
-  }
-
-  isSet() {
-    if (this.useX) { return this.get('gpsX') * this.get('gpsY') > 0; }
-    else { return this.get('gpsY') > 0; }
-  }
-}
-
 function getProjectionMatrix(pointA, pointB, flip = true) {
   const ROTATATION = [
     [0, 1, 0],
@@ -165,12 +125,12 @@ function getProjectionMatrix(pointA, pointB, flip = true) {
     [0, 0, 1],
   ];
 
-  let img1 = [pointA.get('imgX'), pointA.get('imgY'), 1];
-  let img2 = [pointB.get('imgX'), pointB.get('imgY'), 1];
+  let img1 = [pointA.imgX, pointA.imgY, 1];
+  let img2 = [pointB.imgX, pointB.imgY, 1];
   let img3 = add(img1, multiply(ROTATATION, subtract(img2, img1)));
 
-  let gps1 = [pointA.get('gpsX'), pointA.get('gpsY'), 1];
-  let gps2 = [pointB.get('gpsX'), pointB.get('gpsY'), 1];
+  let gps1 = [pointA.gpsX, pointA.gpsY, 1];
+  let gps2 = [pointB.gpsX, pointB.gpsY, 1];
   let gps3;
   if (!flip) {
     gps3 = add(gps1, multiply(ROTATATION, subtract(gps2, gps1)));
@@ -192,20 +152,17 @@ function project(M, x, y) {
   return result;
 }
 
-function drawBoxedText(ctx, lines, x, y, fontSize, margin = 0.5, left = false, back = '#000', fore = '#fff') {
+function drawBoxedText(ctx, lines, x, y, margin = 0.5, left = false, back = '#000', fore = '#fff') {
 
-  // Calculate text width / height
+  // Calculate text width, height
   let width = 0;
   let height = 0;
-  margin *= fontSize;
   lines.forEach(line => {
     let size = ctx.measureText(line);
     width = Math.max(size.width);
     height = Math.max(height, size.actualBoundingBoxAscent);
   });
-
-  // Apply font size
-  ctx.font = fontSize + "px Ariel";
+  margin *= height;
 
   // Draw box
   ctx.fillStyle = back;
@@ -218,11 +175,39 @@ function drawBoxedText(ctx, lines, x, y, fontSize, margin = 0.5, left = false, b
   });
 }
 
+function getCali(idx, label, useX = true) {
+  return {
+    idx,
+    label,
+    useX,
+    imgX: 0,
+    imgY: 0,
+    gpsX: 0,
+    gpsY: 0,
+  };
+}
+
+function isSet(point) {
+  if (point.useX) {
+    return point.gpsX * point.gpsY > 0;
+  } else {
+    return point.gpsY > 0;
+  }
+}
+
+// Higher-order function.
+const setter = (component, point) => (key) => (value) => component.setState(state => {
+  let newState = { ...state };
+  newState.cali[point.idx][key] = value;
+  return newState;
+});
+
 class CadViewer extends React.Component {
   static contextType = AppContext;
 
   constructor(props) {
     super(props);
+    // Function binding
     this.repaint = this.repaint.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseLeftClick = this.onMouseLeftClick.bind(this);
@@ -230,9 +215,6 @@ class CadViewer extends React.Component {
     this.onMenuClicked = this.onMenuClicked.bind(this);
     this.onInputClosed = this.onInputClosed.bind(this);
 
-    // The difference between state and component variable is that
-    // state change always makes re-render.
-    // It works similar to 'ref'.
     this.state = {
       alertShow: true,
       alertStr: "CAD 데이터 로딩 중...",
@@ -241,24 +223,25 @@ class CadViewer extends React.Component {
       isInputVisible: false,
       menuX: 0,
       menuY: 0,
-      M: [[0, 0], [0, 0]]
+      M: [[0, 0], [0, 0]],
+      cali: {
+        'Point A': getCali('Point A', 'A'),
+        'Point B': getCali('Point B', 'B'),
+        'Point C': getCali('Point C', 'C', false),
+        'Point D': getCali('Point D', 'D', false),
+      },
+      selectedPoint: null
     };
 
     // Array of calibration points
     this.imgX = 0;
     this.imgY = 0;
-    this.points = [
-      new CadCalibration(this, 'Point A', '평면도 A'),
-      new CadCalibration(this, 'Point B', '평면도 B'),
-      new CadCalibration(this, 'Point C', '측면도 A', false),
-      new CadCalibration(this, 'Point D', '측면도 B', false),
-    ];
   }
 
   isPivotSet() {
     let result = true;
-    this.points.forEach(point => {
-      result &= point.isSet();
+    forDict(this.state.cali, (key, point) => {
+      result &= isSet(point);
     });
     return result;
   }
@@ -280,38 +263,40 @@ class CadViewer extends React.Component {
     ctx.lineTo(x + 32, y);
     ctx.stroke();
 
+    // Adjust font size
+    ctx.font = Math.round(scale * 15) + "px Ariel";
+
     // Draw mouse position text
-    let fontSize = Math.round(scale * 15);
     if (this.isPivotSet()) {
-      let [gpsX, gpsY, c] = project(this.state.M, x, y);
+      let [gpsX, gpsY] = project(this.state.M, x, y);
 
       // Draw pivot
       ctx.fillStyle = '#0000ff';
-      this.points.forEach(point => {
-        let ix = point.get("imgX");
-        let iy = point.get("imgY");
+      forDict(this.state.cali, (key, point) => {
+        let ix = point.imgX;
+        let iy = point.imgY;
         ctx.beginPath();
         ctx.moveTo(ix, iy);
         ctx.lineTo(ix + 5, iy - 10);
         ctx.lineTo(ix - 5, iy - 10);
         ctx.fill();
-        ctx.fillText("(" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20);
+        ctx.fillText("(" + point.gpsX + "," + point.gpsY + ")", ix, iy - 20);
       });
 
       // Draw cursor text
-      drawBoxedText(ctx, [`X:${Math.round(gpsX)}`, `Y:${Math.round(gpsY)}`], x, y, fontSize);
+      drawBoxedText(ctx, [`X:${Math.round(gpsX)}`, `Y:${Math.round(gpsY)}`], x, y);
     } else {
       ctx.fillStyle = '#800000';
-      this.points.forEach(point => {
-        if (!point.isSet()) return;
-        let ix = point.get("imgX");
-        let iy = point.get("imgY");
+      forDict(this.state.cali, (key, point) => {
+        if (!isSet(point)) return;
+        let ix = point.imgX;
+        let iy = point.imgY;
         ctx.beginPath();
         ctx.moveTo(ix, iy);
         ctx.lineTo(ix + 5, iy - 10);
         ctx.lineTo(ix - 5, iy - 10);
         ctx.fill();
-        ctx.fillText(point.label + " (" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20);
+        drawBoxedText(ctx, [point.label + " (" + point.gpsX + "," + point.gpsY + ")"], ix - 10, iy + 10, 0.1);
       });
     }
   }
@@ -346,8 +331,8 @@ class CadViewer extends React.Component {
   }
 
   onMenuClicked(point) {
-    point.set('imgX', this.imgX);
-    point.set('imgY', this.imgY);
+    point.imgX = this.imgX;
+    point.imgY = this.imgY;
     this.setState({
       selectedPoint: point,
       isInputVisible: true,
@@ -356,9 +341,9 @@ class CadViewer extends React.Component {
   }
 
   onInputClosed() {
-    let M = getProjectionMatrix(this.points[0], this.points[1]);
+    let M = getProjectionMatrix(this.state.cali['Point A'], this.state.cali['Point B']);
     this.setState({ isInputVisible: false, M });
-    axios.post('/api/cali', { data: this.state.calibration, img: this.meta.img });
+    axios.post('/api/cali', { data: this.state.cali, img: this.meta.img });
   }
 
   componentDidMount() {
@@ -386,11 +371,11 @@ class CadViewer extends React.Component {
         .then(x => x.data)
         .then((result) => {
           result.data.forEach(point => {
-            Object.keys(point).forEach(key => {
-              tempState.calibration[point.idx][key] = point[key];
+            forDict(point, (key, value) => {
+              tempState.cali[point.idx][key] = value;
             });
           });
-          tempState.M = getProjectionMatrix(this.points[0], this.points[1]);
+          tempState.M = getProjectionMatrix(this.state.cali['Point A'], this.state.cali['Point B']);
         });
 
       Promise.all([loadProc, dataProc])
@@ -425,12 +410,13 @@ class CadViewer extends React.Component {
           show={this.state.isMenuVisible}
           x={this.state.menuX}
           y={this.state.menuY}
-          points={this.points}
+          points={this.state.cali}
           onClick={this.onMenuClicked}
         ></ClickMenu>
         <CalibrationInputForm
           show={this.state.isInputVisible}
           point={this.state.selectedPoint}
+          setter={setter(this, this.state.selectedPoint)}
           onSave={this.onInputClosed}
         ></CalibrationInputForm>
         <Alert
