@@ -184,13 +184,38 @@ function getProjectionMatrix(pointA, pointB, flip = true) {
 
   let ii = inv(img);
   let M = multiply(gps, ii);
-  console.log(M);
   return M;
 }
 
 function project(M, x, y) {
   let result = multiply(M, [[x], [y], [1]]);
   return result;
+}
+
+function drawBoxedText(ctx, lines, x, y, fontSize, margin = 0.5, left = false, back = '#000', fore = '#fff') {
+
+  // Calculate text width / height
+  let width = 0;
+  let height = 0;
+  margin *= fontSize;
+  lines.forEach(line => {
+    let size = ctx.measureText(line);
+    width = Math.max(size.width);
+    height = Math.max(height, size.actualBoundingBoxAscent);
+  });
+
+  // Apply font size
+  ctx.font = fontSize + "px Ariel";
+
+  // Draw box
+  ctx.fillStyle = back;
+  ctx.fillRect(x, y, width + margin * 2, (height + margin) * lines.length + margin);
+
+  // Draw text
+  ctx.fillStyle = fore;
+  lines.forEach((line, i) => {
+    ctx.fillText(line, x + margin, y + (margin + height) * (i + 1));
+  });
 }
 
 class CadViewer extends React.Component {
@@ -230,18 +255,22 @@ class CadViewer extends React.Component {
     ];
   }
 
-  repaint() {
-    let { ctx, imgX: x, imgY: y, scale } = this;
-
-    if (ctx == null) return;
-    let isSet = true;
+  isPivotSet() {
+    let result = true;
     this.points.forEach(point => {
-      isSet &= point.isSet();
+      result &= point.isSet();
     });
+    return result;
+  }
+
+  repaint() {
+    let { ctx, cnv, cadImg, imgX: x, imgY: y, scale } = this;
+
+    if (ctx == null || cadImg == null) return;
 
     // Draw CAD image
-    ctx.clearRect(0, 0, this.cnv.width, this.cnv.height);
-    ctx.drawImage(this.cadImg, 0, 0);
+    ctx.clearRect(0, 0, cnv.width, cnv.height);
+    ctx.drawImage(cadImg, 0, 0);
 
     // Draw cursor(+ shape)
     ctx.beginPath();
@@ -253,11 +282,8 @@ class CadViewer extends React.Component {
 
     // Draw mouse position text
     let fontSize = Math.round(scale * 15);
-    ctx.font = fontSize + "px Ariel";
-    if (isSet) {
+    if (this.isPivotSet()) {
       let [gpsX, gpsY, c] = project(this.state.M, x, y);
-      ctx.fillText(`X:${Math.round(gpsX)}`, x + fontSize, y + fontSize * 1.5);
-      ctx.fillText(`Y:${Math.round(gpsY)}+${c}`, x + fontSize, y + fontSize * 3);
 
       // Draw pivot
       ctx.fillStyle = '#0000ff';
@@ -271,6 +297,9 @@ class CadViewer extends React.Component {
         ctx.fill();
         ctx.fillText("(" + point.get("gpsX") + "," + point.get("gpsY") + ")", ix - 10, iy - 20);
       });
+
+      // Draw cursor text
+      drawBoxedText(ctx, [`X:${Math.round(gpsX)}`, `Y:${Math.round(gpsY)}`], x, y, fontSize);
     } else {
       ctx.fillStyle = '#800000';
       this.points.forEach(point => {
@@ -367,6 +396,7 @@ class CadViewer extends React.Component {
       Promise.all([loadProc, dataProc])
         .then(() => {
           // Calculate scale and repaint
+          if (!this.cnv) return;
           this.scale = px2cnv(this.cnv, 0, 0)[2];
           this.setState(tempState);
         });
