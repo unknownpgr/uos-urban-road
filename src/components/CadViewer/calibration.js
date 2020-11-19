@@ -1,4 +1,4 @@
-function getCali(idx, label, useX = true) {
+function createCaliPoint(idx, label, useX = true) {
     return {
         idx,
         label,
