@@ -1,6 +1,6 @@
 import React from "react";
 import axios from "axios";
-import { Alert } from "react-bootstrap";
+import { Alert, Button } from "react-bootstrap";
 import "./cadViewer.scss";
 import AppContext from "../Context/AppContext";
 import { add, inv, multiply, subtract, transpose } from "mathjs";
@@ -8,6 +8,7 @@ import { ClickMenu } from "./ClickMenu";
 import { CalibrationInputForm } from "./CalibrationInputForm";
 import { DataCell } from "./DataCell";
 import { isSet, createCaliPoint, setter } from "./calibration";
+import { saveFile } from "../../libs/saveFile";
 
 const forDict = (dict, lambda) =>
   Object.keys(dict).forEach((key, i) => lambda(key, dict[key], i));
@@ -114,6 +115,7 @@ class CadViewer extends React.Component {
     this.onMouseRightClick = this.onMouseRightClick.bind(this);
     this.onMenuClicked = this.onMenuClicked.bind(this);
     this.onInputClosed = this.onInputClosed.bind(this);
+    this.onDataExport = this.onDataExport.bind(this);
 
     this.state = {
       alertShow: true,
@@ -142,7 +144,7 @@ class CadViewer extends React.Component {
     this.imgY = 0;
   }
 
-  isPivotSet() {
+  isAllPivotSet() {
     let result = true;
     forDict(this.state.cali, (key, point) => {
       result &= isSet(point);
@@ -171,7 +173,7 @@ class CadViewer extends React.Component {
     ctx.font = Math.round(scale * 15) + "px Ariel";
 
     // Draw mouse position text
-    if (this.isPivotSet()) {
+    if (this.isAllPivotSet()) {
       let [gpsX, gpsY] = project(this.state.M, x, y);
 
       // Draw pivot
@@ -265,6 +267,14 @@ class CadViewer extends React.Component {
     axios.post("/api/cali", { data: this.state.cali, ...this.section });
   }
 
+  onDataExport() {
+    let text = '"#","Date","Long","Lat","Max load","Max Dist","E-Inverse"\n';
+    this.state.sensorData.forEach((row) => {
+      text += row.map((x) => `"${x}"`).join(",") + "\n";
+    });
+    saveFile(`sensor_data_${new Date()}.csv`, text);
+  }
+
   async componentDidMount() {
     try {
       // Get metadata
@@ -302,14 +312,15 @@ class CadViewer extends React.Component {
             this.state.cali["Point B"]
           );
         });
-
       await Promise.all([loadProc, dataProc]);
+
       // Calculate scale and repaint
       if (!this.cnv) return;
       this.scale = px2cnv(this.cnv, 0, 0)[2];
       this.setState(tempState);
 
-      if (!this.isPivotSet()) return;
+      // Get data points
+      if (!this.isAllPivotSet()) return;
       let [xs, ys] = project(this.state.M, 0, 0);
       let [xe, ye] = project(this.state.M, width, height / 2);
       axios
@@ -373,6 +384,7 @@ class CadViewer extends React.Component {
           onClick={this.onMouseLeftClick}
           onContextMenu={this.onMouseRightClick}
         ></canvas>
+        <Button onClick={this.onDataExport}>Export data</Button>
         <div className="table">
           <table>
             <thead>
