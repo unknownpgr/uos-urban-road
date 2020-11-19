@@ -7,7 +7,7 @@ import { add, inv, multiply, subtract, transpose } from "mathjs";
 import { ClickMenu } from "./ClickMenu";
 import { CalibrationInputForm } from "./CalibrationInputForm";
 import { DataCell } from "./DataCell";
-import { isSet, getCali, setter } from "./calibration";
+import { isSet, createCaliPoint, setter } from "./calibration";
 
 const forDict = (dict, lambda) =>
   Object.keys(dict).forEach((key, i) => lambda(key, dict[key], i));
@@ -128,10 +128,10 @@ class CadViewer extends React.Component {
         [0, 0],
       ],
       cali: {
-        "Point A": getCali("Point A", "A"),
-        "Point B": getCali("Point B", "B"),
-        "Point C": getCali("Point C", "C", false),
-        "Point D": getCali("Point D", "D", false),
+        "Point A": createCaliPoint("Point A", "A"),
+        "Point B": createCaliPoint("Point B", "B"),
+        "Point C": createCaliPoint("Point C", "C", false),
+        "Point D": createCaliPoint("Point D", "D", false),
       },
       selectedPoint: null,
       sensorData: [],

@@ -24,4 +24,4 @@ const setter = (component, point) => (key) => (value) => component.setState(stat
     return newState;
 });
 
-export { getCali, isSet, setter };
+export { createCaliPoint, isSet, setter };
