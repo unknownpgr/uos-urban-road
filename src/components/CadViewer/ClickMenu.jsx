@@ -1,9 +1,7 @@
 import React from "react";
 import { ButtonGroup, Button } from "react-bootstrap";
 import { isSet } from "./calibration";
-
-const mapDict = (dict, lambda) =>
-  Object.keys(dict).map((key, i) => lambda(key, dict[key], i));
+import { mapDict } from "../../libs/dictUtil";
 
 export function ClickMenu(props) {
   return (

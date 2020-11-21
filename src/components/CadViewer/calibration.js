@@ -18,10 +18,4 @@ function isSet(point) {
     }
 }
 
-const setter = (component, point) => (key) => (value) => component.setState(state => {
-    let newState = { ...state };
-    newState.cali[point.idx][key] = value;
-    return newState;
-});
-
-export { createCaliPoint, isSet, setter };
+export { createCaliPoint, isSet };

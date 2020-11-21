@@ -7,11 +7,19 @@ import { add, inv, multiply, subtract, transpose } from "mathjs";
 import { ClickMenu } from "./ClickMenu";
 import { CalibrationInputForm } from "./CalibrationInputForm";
 import { DataCell } from "./DataCell";
-import { isSet, createCaliPoint, setter } from "./calibration";
+import { isSet, createCaliPoint } from "./calibration";
 import { saveFile } from "../../libs/saveFile";
+import { mapDict, forDict } from "../../libs/dictUtil";
 
-const forDict = (dict, lambda) =>
-  Object.keys(dict).forEach((key, i) => lambda(key, dict[key], i));
+const sensorDataColumn = {
+  date: "Date",
+  long: "Longtitude",
+  lat: "Latitude",
+  alt: "Altitude(m)",
+  max_load: "Max Load(kN)",
+  max_dist: "Max distance(mm)",
+  e_inv: "E-Inverse",
+};
 
 async function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -22,7 +30,7 @@ async function loadImage(src) {
 }
 
 function px2cnv(cnv, x, y) {
-  // Convert mouse position to canvas pixel.
+  // Convert mouse position to canvas pixel position.
   let rect = cnv.getBoundingClientRect();
   let scaleX = cnv.width / rect.width;
   let scaleY = cnv.height / rect.height;
@@ -63,8 +71,12 @@ function getProjectionMatrix(pointA, pointB, flip = true) {
 }
 
 function project(M, x, y) {
-  let result = multiply(M, [[x], [y], [1]]);
-  return result;
+  let [x_, y_] = multiply(M, [[x], [y], [1]]);
+  return [x_[0], y_[0]];
+}
+
+function projectV(pA, pB, y) {
+  return pA.imgY + ((y - pA.gpsY) * (pB.imgY - pA.imgY)) / (pB.gpsY - pA.gpsY);
 }
 
 function drawBoxedText(
@@ -82,7 +94,7 @@ function drawBoxedText(
   let height = 0;
   lines.forEach((line) => {
     let size = ctx.measureText(line);
-    width = Math.max(size.width);
+    width = Math.max(width, size.width);
     height = Math.max(height, size.actualBoundingBoxAscent);
   });
   margin *= height;
@@ -103,6 +115,19 @@ function drawBoxedText(
   });
 }
 
+function drawAnchor(ctx, x, y, size = 5, label = null) {
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + size, y - size * 1.73);
+  ctx.lineTo(x - size, y - size * 1.73);
+  ctx.fill();
+
+  if (label) {
+    let width = ctx.measureText(label).width;
+    ctx.fillText(label, x - width / 2, y - size * 2.5);
+  }
+}
+
 class CadViewer extends React.Component {
   static contextType = AppContext;
 
@@ -110,16 +135,17 @@ class CadViewer extends React.Component {
     super(props);
     // Function binding
     this.repaint = this.repaint.bind(this);
+    this.setter = this.setter.bind(this);
+    this.loadSensorData = this.loadSensorData.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseLeftClick = this.onMouseLeftClick.bind(this);
     this.onMouseRightClick = this.onMouseRightClick.bind(this);
-    this.onMenuClicked = this.onMenuClicked.bind(this);
+    this.onMenuClick = this.onMenuClick.bind(this);
     this.onInputClosed = this.onInputClosed.bind(this);
     this.onDataExport = this.onDataExport.bind(this);
 
     this.state = {
-      alertShow: true,
-      alertStr: "CAD 데이터 로딩 중...",
+      alertMsg: "CAD 데이터 로딩 중...",
       alertState: "primary",
       isMenuVisible: false,
       isInputVisible: false,
@@ -152,8 +178,62 @@ class CadViewer extends React.Component {
     return result;
   }
 
+  setter(point) {
+    return (key) => (value) =>
+      this.setState((state) => {
+        let newState = { ...state };
+
+        // Update value
+        newState.cali[point.idx][key] = value;
+
+        // Update alert message
+        if (this.isAllPivotSet()) {
+          newState.alertMsg = null;
+        } else {
+          let alertMsg =
+            "캘리브레이션 포인트 " +
+            mapDict(this.state.cali, (_, value) =>
+              !isSet(value) ? value.label : null
+            )
+              .filter((x) => x)
+              .join(", ") +
+            "를 설정해주세요.";
+          newState.alertState = "warning";
+          newState.alertMsg = alertMsg;
+        }
+        return newState;
+      });
+  }
+
+  loadSensorData(M) {
+    // Get data points
+    if (!this.isAllPivotSet()) return;
+
+    let { width } = this.section;
+    let [xs, ys] = project(M, 0, 0);
+    let [xe, ye] = project(
+      M,
+      width,
+      Math.min(this.state.cali["Point C"].imgY, this.state.cali["Point D"].imgY)
+    );
+    axios
+      .get("/api/data", {
+        params: {
+          xs,
+          ys,
+          xe,
+          ye,
+        },
+      })
+      .then((x) => x.data)
+      .then((sensorData) => {
+        this.setState({ sensorData });
+      });
+  }
+
   repaint() {
     let { ctx, cnv, cadImg, imgX: x, imgY: y, scale } = this;
+    // (x,y) = pixel position of mouse cursor
 
     if (ctx == null || cadImg == null) return;
 
@@ -175,38 +255,94 @@ class CadViewer extends React.Component {
     // Draw mouse position text
     if (this.isAllPivotSet()) {
       let [gpsX, gpsY] = project(this.state.M, x, y);
+      let { cali } = this.state;
+
+      // Draw sensor data point and get the nearest point to cursor
+      ctx.fillStyle = "#000000";
+      let minDist = 99999;
+      let minPointIndex = null;
+      let isHorizontal = true;
+      this.state.sensorData.forEach((row, i) => {
+        // Drow on horizontal map
+        let [dataX, dataY] = project(inv(this.state.M), row.long, row.lat);
+        // dataX, dataY = pixel position of data point
+        drawAnchor(ctx, dataX, dataY, scale * 5, "#" + (i + 1));
+        let dist = Math.pow(x - dataX, 2) + Math.pow(y - dataY, 2);
+        if (dist < minDist) {
+          minDist = dist;
+          minPointIndex = i;
+          isHorizontal = true;
+        }
+
+        // Draw on vertical map
+        let dataZ = projectV(cali["Point C"], cali["Point D"], row.alt);
+        drawAnchor(ctx, dataX, dataZ, scale * 5, "#" + (i + 1));
+        dist = Math.pow(x - dataX, 2) + Math.pow(y - dataZ, 2);
+        if (dist < minDist) {
+          minDist = dist;
+          minPointIndex = i;
+          isHorizontal = false;
+        }
+      });
 
       // Draw pivot
       ctx.fillStyle = "#0000ff";
       forDict(this.state.cali, (key, point) => {
         let ix = point.imgX;
         let iy = point.imgY;
-        ctx.beginPath();
-        ctx.moveTo(ix, iy);
-        ctx.lineTo(ix + 5, iy - 10);
-        ctx.lineTo(ix - 5, iy - 10);
-        ctx.fill();
-        ctx.fillText("(" + point.gpsX + "," + point.gpsY + ")", ix, iy - 20);
+        drawAnchor(
+          ctx,
+          ix,
+          iy,
+          scale * 5,
+          "(" + point.gpsX + "," + point.gpsY + ")"
+        );
       });
 
-      // Draw cursor text
-      drawBoxedText(
-        ctx,
-        [`X:${Math.round(gpsX)}`, `Y:${Math.round(gpsY)}`],
-        x,
-        y
-      );
+      // If nearest point in in 5px, highlight it.
+      if (minDist < Math.pow(scale * 10, 2)) {
+        let row = this.state.sensorData[minPointIndex];
+        let [dataX, dataY] = project(inv(this.state.M), row.long, row.lat);
+        let dataZ = projectV(cali["Point C"], cali["Point D"], row.alt);
+
+        ctx.beginPath();
+        ctx.moveTo(dataX, dataY);
+        ctx.lineTo(dataX, dataZ);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ff0000";
+        let drawY = isHorizontal ? dataY : dataZ;
+        drawAnchor(ctx, dataX, drawY, scale * 5);
+        drawBoxedText(
+          ctx,
+          [
+            "Point #" + (minPointIndex + 1),
+            "Long : " + row.long,
+            "Lat : " + row.lat,
+            "Alt : " + row.alt,
+          ],
+          dataX,
+          drawY
+        );
+      } else {
+        // Draw cursor text
+        drawBoxedText(
+          ctx,
+          [
+            `X:${Math.round(gpsX * 1000) / 1000}`,
+            `Y:${Math.round(gpsY * 1000) / 1000}`,
+          ],
+          x,
+          y
+        );
+      }
     } else {
       ctx.fillStyle = "#800000";
       forDict(this.state.cali, (_, point) => {
         if (!isSet(point)) return;
         let ix = point.imgX;
         let iy = point.imgY;
-        ctx.beginPath();
-        ctx.moveTo(ix, iy);
-        ctx.lineTo(ix + 5, iy - 10);
-        ctx.lineTo(ix - 5, iy - 10);
-        ctx.fill();
+        drawAnchor(ctx, ix, iy, scale * 5);
         drawBoxedText(
           ctx,
           [point.label + " (" + point.gpsX + "," + point.gpsY + ")"],
@@ -248,7 +384,7 @@ class CadViewer extends React.Component {
     this.repaint();
   }
 
-  onMenuClicked(point) {
+  onMenuClick(point) {
     point.imgX = this.imgX;
     point.imgY = this.imgY;
     this.setState({
@@ -265,13 +401,14 @@ class CadViewer extends React.Component {
     );
     this.setState({ isInputVisible: false, M });
     axios.post("/api/cali", { data: this.state.cali, ...this.section });
+    this.loadSensorData(M);
   }
 
   onDataExport() {
-    let text = '"#","Date","Long","Lat","Max load","Max Dist","E-Inverse"\n';
-    this.state.sensorData.forEach((row) => {
-      text += row.map((x) => `"${x}"`).join(",") + "\n";
-    });
+    let text = mapDict(sensorDataColumn, (x) => `"${x}"`).join(",") + "\n";
+    text += this.state.sensorData
+      .map((row) => row.map((x) => `"${x}"`).join(","))
+      .join("\n");
     saveFile(`sensor_data_${new Date()}.csv`, text);
   }
 
@@ -292,7 +429,7 @@ class CadViewer extends React.Component {
       // Load image
       let loadProc = loadImage("/img/cad/" + cad_file).then((img) => {
         this.cadImg = img;
-        tempState.alertShow = false;
+        tempState.alertMsg = null;
       });
 
       // Get calibration data
@@ -303,13 +440,14 @@ class CadViewer extends React.Component {
         .then((x) => x.data)
         .then((result) => {
           result.data.forEach((point) => {
+            let setPoint = this.setter(point);
             forDict(point, (key, value) => {
-              tempState.cali[point.idx][key] = value;
+              setPoint(key)(value);
             });
           });
           tempState.M = getProjectionMatrix(
-            this.state.cali["Point A"],
-            this.state.cali["Point B"]
+            tempState.cali["Point A"],
+            tempState.cali["Point B"]
           );
         });
       await Promise.all([loadProc, dataProc]);
@@ -318,34 +456,11 @@ class CadViewer extends React.Component {
       if (!this.cnv) return;
       this.scale = px2cnv(this.cnv, 0, 0)[2];
       this.setState(tempState);
-
-      // Get data points
-      if (!this.isAllPivotSet()) return;
-      let [xs, ys] = project(this.state.M, 0, 0);
-      let [xe, ye] = project(this.state.M, width, height / 2);
-      axios
-        .get("/api/data", {
-          params: {
-            xs: xs[0],
-            ys: ys[0],
-            xe: xe[0],
-            ye: ye[0],
-          },
-        })
-        .then((x) => x.data)
-        .then((data) => {
-          let sensorData = [];
-          data.forEach((row, i) => {
-            row.date = new Date(row.date * 1000);
-            sensorData.push([i + 1, ...Object.keys(row).map((x) => row[x])]);
-          });
-          this.setState({ sensorData });
-        });
+      this.loadSensorData(tempState.M);
     } catch (e) {
       this.setState({
-        alertShow: true,
         alertState: "danger",
-        alertStr: "데이터를 로드하던 중 에러가 발생했습니다.",
+        alertMsg: "데이터를 로드하던 중 에러가 발생했습니다.",
       });
       console.error(e);
     }
@@ -360,20 +475,20 @@ class CadViewer extends React.Component {
           x={this.state.menuX}
           y={this.state.menuY}
           points={this.state.cali}
-          onClick={this.onMenuClicked}
+          onClick={this.onMenuClick}
         ></ClickMenu>
         <CalibrationInputForm
           show={this.state.isInputVisible}
           point={this.state.selectedPoint}
-          setter={setter(this, this.state.selectedPoint)}
+          setter={this.setter(this.state.selectedPoint)}
           onSave={this.onInputClosed}
         ></CalibrationInputForm>
         <Alert
-          style={{ opacity: this.state.alertShow ? 0.9 : 0 }}
+          style={{ opacity: this.state.alertMsg ? 0.9 : 0 }}
           variant={this.state.alertState}
           className="alert m-2"
         >
-          {this.state.alertStr}
+          {this.state.alertMsg}
         </Alert>
         <canvas
           ref={(cnv) => {
@@ -384,33 +499,43 @@ class CadViewer extends React.Component {
           onClick={this.onMouseLeftClick}
           onContextMenu={this.onMouseRightClick}
         ></canvas>
-        <Button onClick={this.onDataExport}>Export data</Button>
-        <div className="table">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Date</th>
-                <th scope="col">Long</th>
-                <th scope="col">Lat</th>
-                <th scope="col">MaxLoad(kN)</th>
-                <th scope="col">MaxDist(mm)</th>
-                <th scope="col">E-Inverse</th>
-              </tr>
-            </thead>
-            <tbody>
-              {this.state.sensorData.map((row, i) => (
-                <tr
-                  style={{ backgroundColor: row[6] < 0.5 ? "red" : "none" }}
-                  key={i + "i"}
-                >
-                  {row.map((item, j) => (
-                    <DataCell key={j + "j"}>{item}</DataCell>
+        <div
+          style={{ display: this.state.sensorData.length > 0 ? "" : "none" }}
+        >
+          <Button onClick={this.onDataExport}>Export data</Button>
+          <div className="table">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  {mapDict(sensorDataColumn, (key, value) => (
+                    <th scope="col" key={key}>
+                      {value}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {this.state.sensorData.map((row, i) => (
+                  <tr
+                    style={{
+                      backgroundColor: row.e_inv < 0.5 ? "red" : "none",
+                    }}
+                    key={i + "i"}
+                  >
+                    <DataCell>{i + 1}</DataCell>
+                    {mapDict(sensorDataColumn, (key, value, i) =>
+                      key !== "date" ? (
+                        <DataCell key={i + "j"}>{row[key]}</DataCell>
+                      ) : (
+                        <DataCell key={i + "j"}>{new Date(row[key])}</DataCell>
+                      )
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
