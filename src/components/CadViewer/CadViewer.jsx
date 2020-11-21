@@ -17,7 +17,7 @@ const sensorDataColumn = {
   lat: "Latitude",
   alt: "Altitude(m)",
   max_load: "Max Load(kN)",
-  max_dist: "Max distance(mm)",
+  max_dist: "Max Distance(mm)",
   e_inv: "E-Inverse",
 };
 
@@ -40,39 +40,44 @@ function px2cnv(cnv, x, y) {
 }
 
 function getProjectionMatrix(pointA, pointB, flip = true) {
-  if (!isSet(pointA) || !isSet(pointB))
+  try {
+    const ROTATATION = [
+      [0, 1, 0],
+      [-1, 0, 0],
+      [0, 0, 1],
+    ];
+
+    let img1 = [pointA.imgX, pointA.imgY, 1];
+    let img2 = [pointB.imgX, pointB.imgY, 1];
+    let img3 = add(img1, multiply(ROTATATION, subtract(img2, img1)));
+
+    let gps1 = [pointA.gpsX, pointA.gpsY, 1];
+    let gps2 = [pointB.gpsX, pointB.gpsY, 1];
+    let gps3;
+    if (!flip) {
+      gps3 = add(gps1, multiply(ROTATATION, subtract(gps2, gps1)));
+    } else {
+      gps3 = add(gps1, multiply(transpose(ROTATATION), subtract(gps2, gps1)));
+    }
+
+    let img = transpose([img1, img2, img3]);
+    let gps = transpose([gps1, gps2, gps3]);
+
+    let ii = inv(img);
+    let M = multiply(gps, ii);
+    return M;
+  } catch {
     return [[0, 0, 0], [0, 0, 0][(0, 0, 0)]];
-
-  const ROTATATION = [
-    [0, 1, 0],
-    [-1, 0, 0],
-    [0, 0, 1],
-  ];
-
-  let img1 = [pointA.imgX, pointA.imgY, 1];
-  let img2 = [pointB.imgX, pointB.imgY, 1];
-  let img3 = add(img1, multiply(ROTATATION, subtract(img2, img1)));
-
-  let gps1 = [pointA.gpsX, pointA.gpsY, 1];
-  let gps2 = [pointB.gpsX, pointB.gpsY, 1];
-  let gps3;
-  if (!flip) {
-    gps3 = add(gps1, multiply(ROTATATION, subtract(gps2, gps1)));
-  } else {
-    gps3 = add(gps1, multiply(transpose(ROTATATION), subtract(gps2, gps1)));
   }
-
-  let img = transpose([img1, img2, img3]);
-  let gps = transpose([gps1, gps2, gps3]);
-
-  let ii = inv(img);
-  let M = multiply(gps, ii);
-  return M;
 }
 
 function project(M, x, y) {
-  let [x_, y_] = multiply(M, [[x], [y], [1]]);
-  return [x_[0], y_[0]];
+  try {
+    let [x_, y_] = multiply(M, [[x], [y], [1]]);
+    return [x_[0], y_[0]];
+  } catch {
+    return [0, 0];
+  }
 }
 
 function projectV(pA, pB, y) {
@@ -470,6 +475,7 @@ class CadViewer extends React.Component {
     this.repaint();
     return (
       <div className="cadViewer">
+        <h1 className="m-4">현장 CAD</h1>
         <ClickMenu
           show={this.state.isMenuVisible}
           x={this.state.menuX}
@@ -502,6 +508,7 @@ class CadViewer extends React.Component {
         <div
           style={{ display: this.state.sensorData.length > 0 ? "" : "none" }}
         >
+          <h1 className="m-4">센서 데이터</h1>
           <Button onClick={this.onDataExport}>Export data</Button>
           <div className="table">
             <table>
