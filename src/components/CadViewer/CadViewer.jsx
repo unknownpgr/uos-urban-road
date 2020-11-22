@@ -152,29 +152,40 @@ class CadViewer extends React.Component {
     this.onDataExport = this.onDataExport.bind(this);
 
     this.state = {
-      alertMsg: "CAD 데이터 로딩 중...",
-      alertState: "primary",
+      // Alerts
+      alertCadMsg: "CAD 데이터 로딩 중...",
+      alertCadState: "primary",
+      alertCaliMsg: "",
+
+      // Menu
       isMenuVisible: false,
-      isInputVisible: false,
       menuX: 0,
       menuY: 0,
-      M: [
-        [0, 0],
-        [0, 0],
-      ],
+
+      // Input
+      isInputVisible: false,
+
+      // Calibration
       cali: {
         "Point A": createCaliPoint("Point A", "A"),
         "Point B": createCaliPoint("Point B", "B"),
         "Point C": createCaliPoint("Point C", "C", false),
         "Point D": createCaliPoint("Point D", "D", false),
       },
+      M: [
+        [0, 0],
+        [0, 0],
+      ],
       selectedPoint: null,
+
+      // Data
       sensorData: [],
     };
 
     // Array of calibration points
     this.imgX = 0;
     this.imgY = 0;
+    this.section = null;
   }
 
   isAllPivotSet() {
@@ -186,17 +197,16 @@ class CadViewer extends React.Component {
   }
 
   setter(point) {
-    return (key) => (value) =>
+    return (key) => (value) => {
       this.setState((state) => {
         let newState = { ...state };
 
-        // Update value
+        // Update point value
         newState.cali[point.idx][key] = value;
 
-        // Update alert message
-        if (this.isAllPivotSet()) {
-          newState.alertMsg = null;
-        } else {
+        // Update message
+        if (this.isAllPivotSet()) newState.alertCaliMsg = null;
+        else {
           let alertMsg =
             "캘리브레이션 포인트 " +
             mapDict(this.state.cali, (_, value) =>
@@ -205,11 +215,12 @@ class CadViewer extends React.Component {
               .filter((x) => x)
               .join(", ") +
             "를 설정해주세요.";
-          newState.alertState = "warning";
-          newState.alertMsg = alertMsg;
+          newState.alertCaliMsg = alertMsg;
         }
+
         return newState;
       });
+    };
   }
 
   loadSensorData(M) {
@@ -432,12 +443,9 @@ class CadViewer extends React.Component {
       this.cnv.height = height;
       this.ctx = this.cnv.getContext("2d");
 
-      let tempState = { ...this.state };
-
       // Load image
       let loadProc = loadImage("/img/cad/" + cad_file).then((img) => {
         this.cadImg = img;
-        tempState.alertMsg = null;
       });
 
       // Get calibration data
@@ -447,24 +455,30 @@ class CadViewer extends React.Component {
         )
         .then((x) => x.data)
         .then((result) => {
+          // Update calibration points
           result.data.forEach((point) => {
-            let setPoint = this.setter(point);
+            let setPoint = this.setter(point, false);
             forDict(point, (key, value) => {
               setPoint(key)(value);
             });
           });
-          tempState.M = getProjectionMatrix(
-            tempState.cali["Point A"],
-            tempState.cali["Point B"]
-          );
+
+          // Then, calculate projection matrix
+          this.setState({
+            M: getProjectionMatrix(
+              this.state.cali["Point A"],
+              this.state.cali["Point B"]
+            ),
+          });
         });
+
+      // Wati until all resources loaded
       await Promise.all([loadProc, dataProc]);
+      this.setState({ alertCadMsg: null });
 
       // Calculate scale and repaint
-      if (!this.cnv) return;
       this.scale = px2cnv(this.cnv, 0, 0)[2];
-      this.setState(tempState);
-      this.loadSensorData(tempState.M);
+      this.loadSensorData(this.state.M);
     } catch (e) {
       this.setState({
         alertState: "danger",
@@ -492,13 +506,22 @@ class CadViewer extends React.Component {
           setter={this.setter(this.state.selectedPoint)}
           onSave={this.onInputClosed}
         ></CalibrationInputForm>
-        <Alert
-          style={{ opacity: this.state.alertMsg ? 0.9 : 0 }}
-          variant={this.state.alertState}
-          className="alert m-2"
-        >
-          {this.state.alertMsg}
-        </Alert>
+        <div className="alertGroup">
+          <Alert
+            style={{ opacity: this.state.alertCadMsg ? 0.9 : 0 }}
+            variant={this.state.alertCadState}
+            className="m-2"
+          >
+            {this.state.alertCadMsg}
+          </Alert>
+          <Alert
+            style={{ opacity: this.state.alertCaliMsg ? 0.9 : 0 }}
+            variant={"warning"}
+            className="m-2"
+          >
+            {this.state.alertCaliMsg}
+          </Alert>
+        </div>
         <hr></hr>
         <canvas
           ref={(cnv) => {
@@ -543,7 +566,7 @@ class CadViewer extends React.Component {
                       ) : (
                         <DataCell
                           key={i + "j"}
-                          bold={key == "e_inv" && row.e_inv < 0.5}
+                          bold={key === "e_inv" && row.e_inv < 0.5}
                         >
                           {row[key]}
                         </DataCell>
