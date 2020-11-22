@@ -18,6 +18,6 @@ export class Clock extends React.Component {
   }
 
   render() {
-    return this.state.time;
+    return <div className="clock">{this.state.time}</div>;
   }
 }

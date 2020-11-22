@@ -1,3 +1,9 @@
 .app {
   height: 100%;
+
+  @media (max-width: 1000px) {
+    .clock {
+      display: none;
+    }
+  }
 }

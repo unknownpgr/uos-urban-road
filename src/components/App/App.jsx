@@ -95,12 +95,13 @@ class App extends React.Component {
           variant="dark"
           className="justify-content-between py-3"
         >
-          <span>
+          <span className="ml-4">
             <Navbar.Brand href="https://www.ex.co.kr/" target="_blank">
               <img
                 src="/img/logo.png"
                 height="20"
-                className="d-inline-block align-top mt-1"
+                className="d-inline-block align-top"
+                style={{ marginTop: "5.5px" }}
                 alt=""
               />
             </Navbar.Brand>
@@ -109,8 +110,8 @@ class App extends React.Component {
           <Navbar.Text>
             <Clock />
           </Navbar.Text>
-          <span>
-            <Navbar.Text className="mr-2">
+          <span className="mr-4">
+            <Navbar.Text className="mr-4">
               You are logged in as {this.state.username}
             </Navbar.Text>
             <Button className="btn-secondary" onClick={this.logout}>
