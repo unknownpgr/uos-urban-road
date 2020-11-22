@@ -9,10 +9,7 @@ function VideoPlayer({ label, src }) {
 
   function update() {
     // Set current milisecond as param just to prevent caching.
-    if (img.current)
-      setTimeout(() => {
-        if (img.current) img.current.src = src + "?hash=" + Date.now();
-      }, INTERVAL_REFRESH);
+    if (img.current) img.current.src = src + "?hash=" + Date.now();
     else setTimeout(update, INTERVAL_RETRY);
   }
 
@@ -24,7 +21,7 @@ function VideoPlayer({ label, src }) {
       {src ? (
         <img
           ref={img}
-          onLoad={update}
+          onLoad={() => setTimeout(update, INTERVAL_REFRESH)}
           onError={() => setTimeout(update, INTERVAL_RETRY)}
           alt="Stream is not available now"
         ></img>

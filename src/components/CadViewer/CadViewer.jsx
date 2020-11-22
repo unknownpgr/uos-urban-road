@@ -71,7 +71,8 @@ function getProjectionMatrix(pointA, pointB, flip = true) {
   }
 }
 
-function project(M, x, y) {
+// Horizontal projection
+function projectH(M, x, y) {
   try {
     let [x_, y_] = multiply(M, [[x], [y], [1]]);
     return [x_[0], y_[0]];
@@ -80,6 +81,7 @@ function project(M, x, y) {
   }
 }
 
+// Vertical projection
 function projectV(pA, pB, y) {
   return pA.imgY + ((y - pA.gpsY) * (pB.imgY - pA.imgY)) / (pB.gpsY - pA.gpsY);
 }
@@ -177,7 +179,7 @@ class CadViewer extends React.Component {
 
   isAllPivotSet() {
     let result = true;
-    forDict(this.state.cali, (key, point) => {
+    forDict(this.state.cali, (_, point) => {
       result &= isSet(point);
     });
     return result;
@@ -215,8 +217,8 @@ class CadViewer extends React.Component {
     if (!this.isAllPivotSet()) return;
 
     let { width } = this.section;
-    let [xs, ys] = project(M, 0, 0);
-    let [xe, ye] = project(
+    let [xs, ys] = projectH(M, 0, 0);
+    let [xe, ye] = projectH(
       M,
       width,
       Math.min(this.state.cali["Point C"].imgY, this.state.cali["Point D"].imgY)
@@ -247,19 +249,21 @@ class CadViewer extends React.Component {
     ctx.drawImage(cadImg, 0, 0);
 
     // Draw cursor(+ shape)
+    this.ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(x, y - 32);
     ctx.lineTo(x, y + 32);
     ctx.moveTo(x - 32, y);
     ctx.lineTo(x + 32, y);
     ctx.stroke();
+    this.ctx.lineWidth = 1;
 
     // Adjust font size
     ctx.font = Math.round(scale * 15) + "px Ariel";
 
     // Draw mouse position text
     if (this.isAllPivotSet()) {
-      let [gpsX, gpsY] = project(this.state.M, x, y);
+      let [gpsX, gpsY] = projectH(this.state.M, x, y);
       let { cali } = this.state;
 
       // Draw sensor data point and get the nearest point to cursor
@@ -269,7 +273,7 @@ class CadViewer extends React.Component {
       let isHorizontal = true;
       this.state.sensorData.forEach((row, i) => {
         // Drow on horizontal map
-        let [dataX, dataY] = project(inv(this.state.M), row.long, row.lat);
+        let [dataX, dataY] = projectH(inv(this.state.M), row.long, row.lat);
         // dataX, dataY = pixel position of data point
         drawAnchor(ctx, dataX, dataY, scale * 5, "#" + (i + 1));
         let dist = Math.pow(x - dataX, 2) + Math.pow(y - dataY, 2);
@@ -307,7 +311,7 @@ class CadViewer extends React.Component {
       // If nearest point in in 5px, highlight it.
       if (minDist < Math.pow(scale * 10, 2)) {
         let row = this.state.sensorData[minPointIndex];
-        let [dataX, dataY] = project(inv(this.state.M), row.long, row.lat);
+        let [dataX, dataY] = projectH(inv(this.state.M), row.long, row.lat);
         let dataZ = projectV(cali["Point C"], cali["Point D"], row.alt);
 
         ctx.beginPath();
@@ -427,7 +431,6 @@ class CadViewer extends React.Component {
       this.cnv.width = width;
       this.cnv.height = height;
       this.ctx = this.cnv.getContext("2d");
-      this.ctx.lineWidth = 3;
 
       let tempState = { ...this.state };
 
@@ -475,7 +478,7 @@ class CadViewer extends React.Component {
     this.repaint();
     return (
       <div className="cadViewer">
-        <h1 className="m-4">현장 CAD</h1>
+        <h1 className="m-4 text-center">현장 CAD</h1>
         <ClickMenu
           show={this.state.isMenuVisible}
           x={this.state.menuX}
@@ -496,6 +499,7 @@ class CadViewer extends React.Component {
         >
           {this.state.alertMsg}
         </Alert>
+        <hr></hr>
         <canvas
           ref={(cnv) => {
             this.cnv = cnv;
@@ -505,11 +509,11 @@ class CadViewer extends React.Component {
           onClick={this.onMouseLeftClick}
           onContextMenu={this.onMouseRightClick}
         ></canvas>
+        <hr></hr>
         <div
           style={{ display: this.state.sensorData.length > 0 ? "" : "none" }}
         >
-          <h1 className="m-4">센서 데이터</h1>
-          <Button onClick={this.onDataExport}>Export data</Button>
+          <h1 className="m-4 text-center">센서 데이터</h1>
           <div className="table">
             <table>
               <thead>
@@ -526,16 +530,23 @@ class CadViewer extends React.Component {
                 {this.state.sensorData.map((row, i) => (
                   <tr
                     style={{
-                      backgroundColor: row.e_inv < 0.5 ? "red" : "none",
+                      backgroundColor: row.e_inv < 0.5 ? "#ffa0a0" : "none",
                     }}
                     key={i + "i"}
                   >
                     <DataCell>{i + 1}</DataCell>
                     {mapDict(sensorDataColumn, (key, value, i) =>
-                      key !== "date" ? (
-                        <DataCell key={i + "j"}>{row[key]}</DataCell>
+                      key === "date" ? (
+                        <DataCell key={i + "j"}>
+                          {new Date(row[key] * 1000)}
+                        </DataCell>
                       ) : (
-                        <DataCell key={i + "j"}>{new Date(row[key])}</DataCell>
+                        <DataCell
+                          key={i + "j"}
+                          bold={key == "e_inv" && row.e_inv < 0.5}
+                        >
+                          {row[key]}
+                        </DataCell>
                       )
                     )}
                   </tr>
@@ -543,6 +554,7 @@ class CadViewer extends React.Component {
               </tbody>
             </table>
           </div>
+          <Button onClick={this.onDataExport}>Export data</Button>
         </div>
       </div>
     );

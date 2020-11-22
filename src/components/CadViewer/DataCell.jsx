@@ -19,5 +19,5 @@ export function DataCell(props) {
     // Else, just convert to string.
     str = item.toString();
   }
-  return <td>{str}</td>;
+  return <td>{props.bold ? <strong>{str}</strong> : str}</td>;
 }

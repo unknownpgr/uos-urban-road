@@ -90,7 +90,11 @@ class App extends React.Component {
     return (
       <div className="app">
         {/* Top bar */}
-        <Navbar bg="dark" variant="dark" className="justify-content-between">
+        <Navbar
+          bg="dark"
+          variant="dark"
+          className="justify-content-between py-3"
+        >
           <span>
             <Navbar.Brand href="https://www.ex.co.kr/" target="_blank">
               <img
@@ -140,6 +144,16 @@ class App extends React.Component {
             </Route>
           </div>
         </Container>
+
+        {/* Footer */}
+        <footer className="page-footer gray pt-4 h-25">
+          <div className="footer-copyright text-center py-4">
+            © 2020 Copyright :
+            <a href="http://urbanscience.uos.ac.kr/">
+              서울시립대학교 국제도시과학대학원
+            </a>
+          </div>
+        </footer>
       </div>
     );
   }
