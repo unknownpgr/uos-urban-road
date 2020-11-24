@@ -427,7 +427,7 @@ class CadViewer extends React.Component {
   onDataExport() {
     let text = mapDict(sensorDataColumn, (x) => `"${x}"`).join(",") + "\n";
     text += this.state.sensorData
-      .map((row) => row.map((x) => `"${x}"`).join(","))
+      .map((row) => mapDict(row, (key, x) => `"${x}"`).join(","))
       .join("\n");
     saveFile(`sensor_data_${new Date()}.csv`, text);
   }
