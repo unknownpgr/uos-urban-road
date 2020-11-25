@@ -171,6 +171,11 @@ app.get('/api/data', async (req, res) => {
   res.send(data);
 });
 
+app.post('/api/data', (req, res) => {
+  let json = req.body;
+  console.log(json);
+});
+
 // 404 Route
 app.get("*", function (req, res) {
   res.status(404).send("Unknown api detected.");
