@@ -5,8 +5,8 @@ import sqlite3
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
-read_dir = os.path.join(current_dir, 'CAD files')
-save_dir = os.path.join(current_dir, 'public/img/cad')
+read_dir = os.path.join(current_dir, '../CAD files')
+save_dir = os.path.join(current_dir, '../public/img/cad')
 if not os.path.isdir(save_dir):
   os.mkdir(save_dir)
 
