@@ -151,6 +151,7 @@ app.get('/api/stream', async (req, res) => {
   }
 });
 
+// Serve sensor data
 app.get('/api/data', async (req, res) => {
   let { xs, xe, ys, ye } = req.query;
 
@@ -171,9 +172,11 @@ app.get('/api/data', async (req, res) => {
   res.send(data);
 });
 
+// Receive sensor data from device
 app.post('/api/data', (req, res) => {
   let json = req.body;
   console.log(json);
+  res.send({});
 });
 
 // 404 Route
