@@ -10,6 +10,7 @@ import { DataCell } from "./DataCell";
 import { isSet, createCaliPoint } from "./calibration";
 import { saveFile } from "../../libs/saveFile";
 import { mapDict, forDict } from "../../libs/dictUtil";
+import { loadImage } from "../../libs/imageUtil";
 
 const sensorDataColumn = {
   date: "Date",
@@ -20,14 +21,6 @@ const sensorDataColumn = {
   max_dist: "Max Distance(mm)",
   e_inv: "E-Inverse",
 };
-
-async function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    let img = new Image();
-    img.onload = () => resolve(img);
-    img.src = src;
-  });
-}
 
 function px2cnv(cnv, x, y) {
   // Convert mouse position to canvas pixel position.
