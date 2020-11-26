@@ -176,7 +176,7 @@ app.get('/api/data', async (req, res) => {
 app.post('/api/data', (req, res) => {
   let json = req.body;
   console.log(json);
-  res.send({});
+  res.status(200).send({ msg: 'successfully received data' });
 });
 
 // 404 Route
@@ -187,7 +187,7 @@ app.get("*", function (req, res) {
 // Run server
 async function main() {
   // Open database
-  db = await Database.open("database.db");
+  db = await Database.open(path.join(__dirname, "database.db"));
   console.log("Database connected.");
 
   // Clear stream cache
