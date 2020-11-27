@@ -34,6 +34,12 @@ const SENSOR_DATA_COLUMN = {
   e_inv: "E-Inverse",
 };
 
+const DATA_STATE = {
+  LOADING: 1,
+  ERROR: 2,
+  OK: 4,
+};
+
 function isDataProper(sensorData) {
   return sensorData.e_inv < 0.5;
 }
@@ -58,10 +64,8 @@ class CadViewer extends React.Component {
     this.loadSensorData = this.loadSensorData.bind(this);
 
     this.state = {
-      // Alerts
-      alertCadMsg: "CAD 데이터 로딩 중...",
-      alertCadState: "primary",
-      alertCaliMsg: "",
+      // Calibration data / image data state
+      dataState: DATA_STATE.LOADING,
 
       // Menu
       isMenuVisible: false,
@@ -108,27 +112,7 @@ class CadViewer extends React.Component {
     return (key) => (value) => {
       this.setState((state) => {
         let newState = { ...state };
-
-        // Update point value
         newState.cali[point.idx][key] = value;
-
-        // Update message
-        // Actually, this function is setter and therefore should be pure function.
-        // Therefore accessing to global variable(such as state) is not good.
-        // But I could not find other ways to update message when value is updated.
-        if (this.isAllPivotSet()) newState.alertCaliMsg = null;
-        else {
-          let alertMsg =
-            "캘리브레이션 포인트 " +
-            mapDict(this.state.cali, (_, value) =>
-              !isSet(value) ? value.label : null
-            )
-              .filter((x) => x)
-              .join(", ") +
-            "를 설정해주세요.";
-          newState.alertCaliMsg = alertMsg;
-        }
-
         return newState;
       });
     };
@@ -428,21 +412,52 @@ class CadViewer extends React.Component {
 
       // Wati until all resources loaded
       await Promise.all([loadProc, dataProc]);
-      this.setState({ alertCadMsg: null });
+      this.setState({ dataState: DATA_STATE.OK });
 
       // Calculate scale and repaint
       this.scale = px2cnv(this.cnv, 0, 0)[2];
       this.loadSensorData(this.state.M);
     } catch (e) {
-      this.setState({
-        alertState: "danger",
-        alertMsg: "데이터를 로드하던 중 에러가 발생했습니다.",
-      });
+      this.setState({ dataState: DATA_STATE.ERROR });
       console.error(e);
     }
   }
 
   render() {
+    let alertMsg;
+    let alertState;
+
+    // If loading error
+    if (this.state.dataState === DATA_STATE.ERROR) {
+      alertMsg = "데이터를 로드하던 중 문제가 발생하였습니다.";
+      alertState = "danger";
+    }
+
+    // If loading
+    else if (this.state.dataState === DATA_STATE.LOADING) {
+      alertMsg = "데이터를 로드하는 중입니다.";
+      alertState = "primary";
+    }
+
+    // If loading is ok and some point is not set
+    else if (!this.isAllPivotSet()) {
+      alertMsg =
+        "캘리브레이션 포인트 " +
+        mapDict(this.state.cali, (_, value) =>
+          !isSet(value) ? value.label : null
+        )
+          .filter((x) => x)
+          .join(", ") +
+        "를 설정해주세요.";
+      alertState = "warning";
+    }
+
+    // If everything is ok
+    else {
+      alertMsg = null;
+      alertState = null;
+    }
+
     this.repaint();
     return (
       <div className="cadViewer">
@@ -462,18 +477,11 @@ class CadViewer extends React.Component {
         ></CalibrationInputForm>
         <div className="alertGroup">
           <Alert
-            style={{ opacity: this.state.alertCadMsg ? 0.9 : 0 }}
-            variant={this.state.alertCadState}
+            style={{ opacity: alertMsg ? 0.9 : 0 }}
+            variant={alertState}
             className="m-2"
           >
-            {this.state.alertCadMsg}
-          </Alert>
-          <Alert
-            style={{ opacity: this.state.alertCaliMsg ? 0.9 : 0 }}
-            variant={"warning"}
-            className="m-2"
-          >
-            {this.state.alertCaliMsg}
+            {alertMsg}
           </Alert>
         </div>
         <hr></hr>
