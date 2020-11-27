@@ -10,6 +10,7 @@ export function DataCell(props) {
       str = item.toString();
     } else {
       // If float, round to four decimal place.
+      // TODO : Update here so that it can be used when item>100.
       str = (item.toString() + '0000').substr(0, 6);
     }
   } else if (item instanceof Date) {
@@ -17,7 +18,8 @@ export function DataCell(props) {
     str = item.toLocaleDateString();
   } else {
     // Else, just convert to string.
-    str = item.toString();
+    // I used +'' instead of .toString() because item can be 'null' or 'undefined'.
+    str = item + '';
   }
   return <td>{props.bold ? <strong>{str}</strong> : str}</td>;
 }
