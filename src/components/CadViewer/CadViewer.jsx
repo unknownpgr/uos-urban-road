@@ -1,12 +1,12 @@
-import React from "react";
-import axios from "axios";
-import { Alert, Button } from "react-bootstrap";
-import "./cadViewer.scss";
-import AppContext from "../Context/AppContext";
-import { inv } from "mathjs";
-import { ClickMenu } from "./ClickMenu";
-import { CalibrationInputForm } from "./CalibrationInputForm";
-import { DataCell } from "./DataCell";
+import React from 'react';
+import axios from 'axios';
+import { Alert, Button } from 'react-bootstrap';
+import './cadViewer.scss';
+import AppContext from '../Context/AppContext';
+import { inv } from 'mathjs';
+import { ClickMenu } from './ClickMenu';
+import { CalibrationInputForm } from './CalibrationInputForm';
+import { DataCell } from './DataCell';
 import {
   isSet,
   createCaliPoint,
@@ -14,24 +14,24 @@ import {
   projectH,
   projectV,
   px2cnv,
-} from "./calibration";
-import { saveFile } from "../../libs/saveFile";
-import { mapDict, forDict } from "../../libs/dictUtil";
+} from './calibration';
+import { saveFile } from '../../libs/saveFile';
+import { mapDict, forDict } from '../../libs/dictUtil';
 import {
   loadImage,
   drawBoxedText,
   drawMarker,
   TEXT_ALIGN,
-} from "../../libs/imageUtil";
+} from '../../libs/imageUtil';
 
 const SENSOR_DATA_COLUMN = {
-  date: "Date",
-  long: "Longtitude",
-  lat: "Latitude",
-  alt: "Altitude(m)",
-  max_load: "Max Load(kN)",
-  max_dist: "Max Distance(mm)",
-  e_inv: "E-Inverse",
+  date: 'Date',
+  long: 'Longtitude',
+  lat: 'Latitude',
+  alt: 'Altitude(m)',
+  max_load: 'Max Load(kN)',
+  max_dist: 'Max Distance(mm)',
+  e_inv: 'E-Inverse',
 };
 
 const DATA_STATE = {
@@ -77,10 +77,10 @@ class CadViewer extends React.Component {
 
       // Calibration
       cali: {
-        "Point A": createCaliPoint("Point A", "A"),
-        "Point B": createCaliPoint("Point B", "B"),
-        "Point C": createCaliPoint("Point C", "C", false),
-        "Point D": createCaliPoint("Point D", "D", false),
+        'Point A': createCaliPoint('Point A', 'A'),
+        'Point B': createCaliPoint('Point B', 'B'),
+        'Point C': createCaliPoint('Point C', 'C', false),
+        'Point D': createCaliPoint('Point D', 'D', false),
       },
       M: [
         [0, 0],
@@ -127,10 +127,10 @@ class CadViewer extends React.Component {
     let [xe, ye] = projectH(
       M,
       width,
-      Math.min(this.state.cali["Point C"].imgY, this.state.cali["Point D"].imgY)
+      Math.min(this.state.cali['Point C'].imgY, this.state.cali['Point D'].imgY)
     );
     axios
-      .get("/api/data", {
+      .get('/api/data', {
         params: {
           xs,
           ys,
@@ -165,21 +165,21 @@ class CadViewer extends React.Component {
     this.ctx.lineWidth = 1;
 
     // Adjust font size
-    ctx.font = Math.round(scale * 15) + "px Ariel";
+    ctx.font = Math.round(scale * 15) + 'px Ariel';
 
     // Draw mouse position text
     if (this.isAllPivotSet()) {
       let [gpsX, gpsY] = projectH(this.state.M, x, y);
       let gpsZ = projectV(
-        this.state.cali["Point C"],
-        this.state.cali["Point D"],
+        this.state.cali['Point C'],
+        this.state.cali['Point D'],
         y,
         true
       );
       let { cali } = this.state;
 
       // Draw pivot
-      ctx.fillStyle = "#0000ff";
+      ctx.fillStyle = '#0000ff';
       forDict(this.state.cali, (key, point) => {
         let ix = point.imgX;
         let iy = point.imgY;
@@ -188,7 +188,7 @@ class CadViewer extends React.Component {
           ix,
           iy,
           scale * 5,
-          "(" + point.gpsX + "," + point.gpsY + ")"
+          '(' + point.gpsX + ',' + point.gpsY + ')'
         );
       });
 
@@ -202,11 +202,11 @@ class CadViewer extends React.Component {
 
         let backgroundColor, foregrondColor;
         if (isDataProper(row)) {
-          backgroundColor = "#000";
-          foregrondColor = "#fff";
+          backgroundColor = '#000';
+          foregrondColor = '#fff';
         } else {
-          backgroundColor = "#ff0000";
-          foregrondColor = "#fff";
+          backgroundColor = '#ff0000';
+          foregrondColor = '#fff';
         }
 
         // dataX, dataY = pixel position of data point
@@ -215,7 +215,7 @@ class CadViewer extends React.Component {
           dataX,
           dataY,
           scale * 5,
-          "#" + (i + 1),
+          '#' + (i + 1),
           backgroundColor,
           foregrondColor
         );
@@ -227,13 +227,13 @@ class CadViewer extends React.Component {
         }
 
         // Draw on vertical map
-        let dataZ = projectV(cali["Point C"], cali["Point D"], row.alt);
+        let dataZ = projectV(cali['Point C'], cali['Point D'], row.alt);
         drawMarker(
           ctx,
           dataX,
           dataZ,
           scale * 5,
-          "#" + (i + 1),
+          '#' + (i + 1),
           backgroundColor,
           foregrondColor
         );
@@ -249,7 +249,7 @@ class CadViewer extends React.Component {
       if (minDist < Math.pow(scale * 10, 2)) {
         let row = this.state.sensorData[minPointIndex];
         let [dataX, dataY] = projectH(inv(this.state.M), row.long, row.lat);
-        let dataZ = projectV(cali["Point C"], cali["Point D"], row.alt);
+        let dataZ = projectV(cali['Point C'], cali['Point D'], row.alt);
 
         ctx.beginPath();
         ctx.moveTo(dataX, dataY);
@@ -257,13 +257,13 @@ class CadViewer extends React.Component {
         ctx.stroke();
 
         let drawY = isHorizontal ? dataY : dataZ;
-        drawMarker(ctx, dataX, drawY, scale * 5, null, "#ff0000");
+        drawMarker(ctx, dataX, drawY, scale * 5, null, '#ff0000');
         drawBoxedText(
           ctx,
-          ["Point #" + (minPointIndex + 1)].concat(
+          ['Point #' + (minPointIndex + 1)].concat(
             mapDict(
               row,
-              (key, value) => SENSOR_DATA_COLUMN[key] + " : " + value
+              (key, value) => SENSOR_DATA_COLUMN[key] + ' : ' + value
             )
           ),
           dataX,
@@ -275,8 +275,8 @@ class CadViewer extends React.Component {
         if (
           y <
           Math.min(
-            this.state.cali["Point C"].imgY,
-            this.state.cali["Point D"].imgY
+            this.state.cali['Point C'].imgY,
+            this.state.cali['Point D'].imgY
           )
         ) {
           text = [
@@ -290,7 +290,7 @@ class CadViewer extends React.Component {
         drawBoxedText(ctx, text, x, y, TEXT_ALIGN.LEFT);
       }
     } else {
-      ctx.fillStyle = "#800000";
+      ctx.fillStyle = '#800000';
       forDict(this.state.cali, (_, point) => {
         if (!isSet(point)) return;
         let ix = point.imgX;
@@ -298,7 +298,7 @@ class CadViewer extends React.Component {
         drawMarker(ctx, ix, iy, scale * 5);
         drawBoxedText(
           ctx,
-          [point.label + " (" + point.gpsX + "," + point.gpsY + ")"],
+          [point.label + ' (' + point.gpsX + ',' + point.gpsY + ')'],
           ix - 10,
           iy + 10,
           0.1
@@ -349,24 +349,24 @@ class CadViewer extends React.Component {
 
   onInputClosed() {
     let M = getProjectionMatrix(
-      this.state.cali["Point A"],
-      this.state.cali["Point B"]
+      this.state.cali['Point A'],
+      this.state.cali['Point B']
     );
     this.setState({ isInputVisible: false, M });
-    axios.post("/api/cali", { data: this.state.cali, ...this.section });
+    axios.post('/api/cali', { data: this.state.cali, ...this.section });
     this.loadSensorData(M);
   }
 
   onDataExport() {
-    let text = mapDict(SENSOR_DATA_COLUMN, (x) => `"${x}"`).join(",") + "\n";
+    let text = mapDict(SENSOR_DATA_COLUMN, (x) => `"${x}"`).join(',') + '\n';
     text += this.state.sensorData
       .map((row) =>
         mapDict(
           row,
-          (key, x) => `"${key === "date" ? new Date(x * 1000) : x}"`
-        ).join(",")
+          (key, x) => `"${key === 'date' ? new Date(x * 1000) : x}"`
+        ).join(',')
       )
-      .join("\n");
+      .join('\n');
     saveFile(`sensor_data_${new Date()}.csv`, text);
   }
 
@@ -379,10 +379,10 @@ class CadViewer extends React.Component {
       // Set canvas
       this.cnv.width = width;
       this.cnv.height = height;
-      this.ctx = this.cnv.getContext("2d");
+      this.ctx = this.cnv.getContext('2d');
 
       // Load image
-      let loadProc = loadImage("/img/cad/" + cad_file).then((img) => {
+      let loadProc = loadImage('/img/cad/' + cad_file).then((img) => {
         this.cadImg = img;
       });
 
@@ -404,8 +404,8 @@ class CadViewer extends React.Component {
           // Then, calculate projection matrix
           this.setState({
             M: getProjectionMatrix(
-              this.state.cali["Point A"],
-              this.state.cali["Point B"]
+              this.state.cali['Point A'],
+              this.state.cali['Point B']
             ),
           });
         });
@@ -429,27 +429,27 @@ class CadViewer extends React.Component {
 
     // If loading error
     if (this.state.dataState === DATA_STATE.ERROR) {
-      alertMsg = "데이터를 로드하던 중 문제가 발생하였습니다.";
-      alertState = "danger";
+      alertMsg = '데이터를 로드하던 중 문제가 발생하였습니다.';
+      alertState = 'danger';
     }
 
     // If loading
     else if (this.state.dataState === DATA_STATE.LOADING) {
-      alertMsg = "데이터를 로드하는 중입니다.";
-      alertState = "primary";
+      alertMsg = '데이터를 로드하는 중입니다.';
+      alertState = 'primary';
     }
 
     // If loading is ok and some point is not set
     else if (!this.isAllPivotSet()) {
       alertMsg =
-        "캘리브레이션 포인트 " +
+        '캘리브레이션 포인트 ' +
         mapDict(this.state.cali, (_, value) =>
           !isSet(value) ? value.label : null
         )
           .filter((x) => x)
-          .join(", ") +
-        "를 설정해주세요.";
-      alertState = "warning";
+          .join(', ') +
+        '를 설정해주세요.';
+      alertState = 'warning';
     }
 
     // If everything is ok
@@ -460,8 +460,8 @@ class CadViewer extends React.Component {
 
     this.repaint();
     return (
-      <div className="cadViewer">
-        <h1 className="m-4 text-center">현장 CAD</h1>
+      <div className='cadViewer'>
+        <h1 className='m-4 text-center'>현장 CAD</h1>
         <ClickMenu
           show={this.state.isMenuVisible}
           x={this.state.menuX}
@@ -473,11 +473,11 @@ class CadViewer extends React.Component {
           point={this.state.selectedPoint}
           setter={this.setter(this.state.selectedPoint)}
           onSave={this.onInputClosed}></CalibrationInputForm>
-        <div className="alertGroup">
+        <div className='alertGroup'>
           <Alert
             style={{ opacity: alertMsg ? 0.9 : 0 }}
             variant={alertState}
-            className="m-2">
+            className='m-2'>
             {alertMsg}
           </Alert>
         </div>
@@ -486,21 +486,21 @@ class CadViewer extends React.Component {
           ref={(cnv) => {
             this.cnv = cnv;
           }}
-          className="w-100"
+          className='w-100'
           onMouseMove={this.onMouseMove}
           onClick={this.onMouseLeftClick}
           onContextMenu={this.onMouseRightClick}></canvas>
         <hr></hr>
         <div
-          style={{ display: this.state.sensorData.length > 0 ? "" : "none" }}>
-          <h1 className="m-4 text-center">센서 데이터</h1>
-          <div className="table">
+          style={{ display: this.state.sensorData.length > 0 ? '' : 'none' }}>
+          <h1 className='m-4 text-center'>센서 데이터</h1>
+          <div className='table'>
             <table>
               <thead>
                 <tr>
-                  <th scope="col">#</th>
+                  <th scope='col'>#</th>
                   {mapDict(SENSOR_DATA_COLUMN, (key, value) => (
-                    <th scope="col" key={key}>
+                    <th scope='col' key={key}>
                       {value}
                     </th>
                   ))}
@@ -510,15 +510,15 @@ class CadViewer extends React.Component {
                 {this.state.sensorData.map((row, i) => (
                   <tr
                     style={{
-                      backgroundColor: isDataProper(row) ? "none" : "#ffa0a0",
+                      backgroundColor: isDataProper(row) ? 'none' : '#ffa0a0',
                     }}
-                    key={i + "i"}>
+                    key={i + 'i'}>
                     <DataCell>{i + 1}</DataCell>
                     {mapDict(SENSOR_DATA_COLUMN, (key, _, i) => (
                       <DataCell
-                        key={i + "j"}
-                        bold={key === "e_inv" && !isDataProper(row)}>
-                        {key === "date" ? new Date(row[key] * 1000) : row[key]}
+                        key={i + 'j'}
+                        bold={key === 'e_inv' && !isDataProper(row)}>
+                        {key === 'date' ? new Date(row[key] * 1000) : row[key]}
                       </DataCell>
                     ))}
                   </tr>

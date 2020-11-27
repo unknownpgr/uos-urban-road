@@ -1,8 +1,8 @@
-import React from "react";
-import { Button, Form } from "react-bootstrap";
-import { loadImage } from "../../libs/imageUtil";
-import VideoPlayer from "./VideoPlayer/VideoPlayer";
-import "./videoViewer.scss";
+import React from 'react';
+import { Button, Form } from 'react-bootstrap';
+import { loadImage } from '../../libs/imageUtil';
+import VideoPlayer from './VideoPlayer/VideoPlayer';
+import './videoViewer.scss';
 
 const INTERVAL_RETRY = 2000;
 const INTERVAL_REFRESH = 80;
@@ -22,7 +22,7 @@ class VideoViewer extends React.Component {
   async updateStream() {
     if (!this.state.isComponentMounted) return;
     try {
-      let result = await loadImage("/api/stream?hash=" + Date.now());
+      let result = await loadImage('/api/stream?hash=' + Date.now());
       this.setState({ stream: result });
       setTimeout(this.updateStream, INTERVAL_REFRESH);
     } catch {
@@ -42,47 +42,47 @@ class VideoViewer extends React.Component {
 
   render() {
     return (
-      <table className="videoViewer">
+      <table className='videoViewer'>
         <tbody>
           <tr>
             <td>
-              <Form className="mb-1">
+              <Form className='mb-1'>
                 <h4>스냅샷</h4>
-                <Form.Group className="mr-3">
-                  <Form.Label htmlFor="snapshotTerm">저장 주기</Form.Label>
+                <Form.Group className='mr-3'>
+                  <Form.Label htmlFor='snapshotTerm'>저장 주기</Form.Label>
                   <Form.Control
-                    type="number"
-                    id="snapshotTerm"
-                    placeholder="단위 : 초(second)"></Form.Control>
+                    type='number'
+                    id='snapshotTerm'
+                    placeholder='단위 : 초(second)'></Form.Control>
                 </Form.Group>
-                <Form.Group className="mx-1 row">
+                <Form.Group className='mx-1 row'>
                   <Form.Check
-                    type="checkbox"
-                    className="mx-1"
-                    label="Top"
-                    checked="true"></Form.Check>
+                    type='checkbox'
+                    className='mx-1'
+                    label='Top'
+                    checked='true'></Form.Check>
                   <Form.Check
-                    type="checkbox"
-                    className="mx-1"
-                    label="Left"
-                    checked="true"></Form.Check>
+                    type='checkbox'
+                    className='mx-1'
+                    label='Left'
+                    checked='true'></Form.Check>
                   <Form.Check
-                    type="checkbox"
-                    className="mx-1"
-                    label="Right"
-                    checked="true"></Form.Check>
+                    type='checkbox'
+                    className='mx-1'
+                    label='Right'
+                    checked='true'></Form.Check>
                   <Form.Check
-                    type="checkbox"
-                    className="mx-1"
-                    label="Bottom"
-                    checked="true"></Form.Check>
+                    type='checkbox'
+                    className='mx-1'
+                    label='Bottom'
+                    checked='true'></Form.Check>
                 </Form.Group>
-                <Button className="btn-primary">설정 저장</Button>
+                <Button className='btn-primary'>설정 저장</Button>
               </Form>
             </td>
             <td>
               <VideoPlayer
-                label="top"
+                label='top'
                 src={this.state.stream}
                 index={0}></VideoPlayer>
             </td>
@@ -93,14 +93,14 @@ class VideoViewer extends React.Component {
           <tr>
             <td>
               <VideoPlayer
-                label="left"
+                label='left'
                 src={this.state.stream}
                 index={1}></VideoPlayer>
             </td>
             <td></td>
             <td>
               <VideoPlayer
-                label="right"
+                label='right'
                 src={this.state.stream}
                 index={2}></VideoPlayer>
             </td>
@@ -111,7 +111,7 @@ class VideoViewer extends React.Component {
             <td></td>
             <td>
               <VideoPlayer
-                label="bottom"
+                label='bottom'
                 src={this.state.stream}
                 index={3}></VideoPlayer>
             </td>

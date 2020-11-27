@@ -1,5 +1,5 @@
-import React from "react";
-import { Form } from "react-bootstrap";
+import React from 'react';
+import { Form } from 'react-bootstrap';
 
 export function LabeledInput({ label, value, setValue }) {
   return (
@@ -8,7 +8,7 @@ export function LabeledInput({ label, value, setValue }) {
       <Form.Control
         onChange={(e) => setValue(e.target.value)}
         value={value}
-        type="number"></Form.Control>
+        type='number'></Form.Control>
     </Form.Group>
   );
 }

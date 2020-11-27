@@ -1,15 +1,15 @@
-import React from "react";
+import React from 'react';
 
 export class Clock extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { time: (new Date() + "").substring(0, 24) };
+    this.state = { time: (new Date() + '').substring(0, 24) };
     this.intervalKey = 0;
   }
 
   componentDidMount() {
     this.intervalKey = setInterval(() =>
-      this.setState({ time: (new Date() + "").substring(0, 24) })
+      this.setState({ time: (new Date() + '').substring(0, 24) })
     );
   }
 
@@ -18,6 +18,6 @@ export class Clock extends React.Component {
   }
 
   render() {
-    return <div className="clock">{this.state.time}</div>;
+    return <div className='clock'>{this.state.time}</div>;
   }
 }

@@ -1,6 +1,6 @@
-import React from "react";
-import { Button, Modal, Form } from "react-bootstrap";
-import { LabeledInput } from "./LabeledInput";
+import React from 'react';
+import { Button, Modal, Form } from 'react-bootstrap';
+import { LabeledInput } from './LabeledInput';
 
 export function CalibrationInputForm({ point, setter, show, onSave }) {
   if (!point) return <></>;
@@ -13,18 +13,18 @@ export function CalibrationInputForm({ point, setter, show, onSave }) {
         <Form>
           {point?.useX ? (
             <LabeledInput
-              label="X"
+              label='X'
               value={point.gpsX}
-              setValue={setter("gpsX")}></LabeledInput>
+              setValue={setter('gpsX')}></LabeledInput>
           ) : undefined}
           <LabeledInput
-            label="Y"
+            label='Y'
             value={point.gpsY}
-            setValue={setter("gpsY")}></LabeledInput>
+            setValue={setter('gpsY')}></LabeledInput>
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="primary" onClick={onSave}>
+        <Button variant='primary' onClick={onSave}>
           저장
         </Button>
       </Modal.Footer>
