@@ -467,20 +467,17 @@ class CadViewer extends React.Component {
           x={this.state.menuX}
           y={this.state.menuY}
           points={this.state.cali}
-          onClick={this.onMenuClick}
-        ></ClickMenu>
+          onClick={this.onMenuClick}></ClickMenu>
         <CalibrationInputForm
           show={this.state.isInputVisible}
           point={this.state.selectedPoint}
           setter={this.setter(this.state.selectedPoint)}
-          onSave={this.onInputClosed}
-        ></CalibrationInputForm>
+          onSave={this.onInputClosed}></CalibrationInputForm>
         <div className="alertGroup">
           <Alert
             style={{ opacity: alertMsg ? 0.9 : 0 }}
             variant={alertState}
-            className="m-2"
-          >
+            className="m-2">
             {alertMsg}
           </Alert>
         </div>
@@ -492,12 +489,10 @@ class CadViewer extends React.Component {
           className="w-100"
           onMouseMove={this.onMouseMove}
           onClick={this.onMouseLeftClick}
-          onContextMenu={this.onMouseRightClick}
-        ></canvas>
+          onContextMenu={this.onMouseRightClick}></canvas>
         <hr></hr>
         <div
-          style={{ display: this.state.sensorData.length > 0 ? "" : "none" }}
-        >
+          style={{ display: this.state.sensorData.length > 0 ? "" : "none" }}>
           <h1 className="m-4 text-center">센서 데이터</h1>
           <div className="table">
             <table>
@@ -517,14 +512,12 @@ class CadViewer extends React.Component {
                     style={{
                       backgroundColor: isDataProper(row) ? "none" : "#ffa0a0",
                     }}
-                    key={i + "i"}
-                  >
+                    key={i + "i"}>
                     <DataCell>{i + 1}</DataCell>
                     {mapDict(SENSOR_DATA_COLUMN, (key, _, i) => (
                       <DataCell
                         key={i + "j"}
-                        bold={key === "e_inv" && !isDataProper(row)}
-                      >
+                        bold={key === "e_inv" && !isDataProper(row)}>
                         {key === "date" ? new Date(row[key] * 1000) : row[key]}
                       </DataCell>
                     ))}

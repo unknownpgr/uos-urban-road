@@ -20,8 +20,7 @@ function Provider(props) {
           document.cookie = "token=" + token;
           _setToken(token);
         },
-      }}
-    >
+      }}>
       {props.children}
     </AppContext.Provider>
   );

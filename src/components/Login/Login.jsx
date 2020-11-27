@@ -94,8 +94,7 @@ class Login extends React.Component {
                     type="text"
                     value={this.state.id}
                     onChange={this.onChangeID}
-                    disabled={this.state.isLoading}
-                  ></Form.Control>
+                    disabled={this.state.isLoading}></Form.Control>
                 </Form.Group>
 
                 {/* Password input field */}
@@ -105,15 +104,13 @@ class Login extends React.Component {
                     type="password"
                     value={this.state.pw}
                     onChange={this.onChangePw}
-                    disabled={this.state.isLoading}
-                  ></Form.Control>
+                    disabled={this.state.isLoading}></Form.Control>
                 </Form.Group>
 
                 {/* Submit button */}
                 <Form.Control
                   type="submit"
-                  className="btn btn-primary"
-                ></Form.Control>
+                  className="btn btn-primary"></Form.Control>
               </Form>
             </Card.Body>
           </Card>

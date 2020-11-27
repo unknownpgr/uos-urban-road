@@ -12,14 +12,12 @@ export function ClickMenu(props) {
         display: props.show ? undefined : "none",
         left: props.x,
         top: props.y,
-      }}
-    >
+      }}>
       {mapDict(props.points, (key, point, i) => (
         <Button
           onClick={() => props.onClick(point)}
           key={i}
-          variant={isSet(point) ? "success" : "primary"}
-        >
+          variant={isSet(point) ? "success" : "primary"}>
           {point.label}
         </Button>
       ))}

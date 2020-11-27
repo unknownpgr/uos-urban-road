@@ -15,14 +15,12 @@ export function CalibrationInputForm({ point, setter, show, onSave }) {
             <LabeledInput
               label="X"
               value={point.gpsX}
-              setValue={setter("gpsX")}
-            ></LabeledInput>
+              setValue={setter("gpsX")}></LabeledInput>
           ) : undefined}
           <LabeledInput
             label="Y"
             value={point.gpsY}
-            setValue={setter("gpsY")}
-          ></LabeledInput>
+            setValue={setter("gpsY")}></LabeledInput>
         </Form>
       </Modal.Body>
       <Modal.Footer>

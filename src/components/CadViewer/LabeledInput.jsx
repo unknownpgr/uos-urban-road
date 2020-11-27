@@ -8,8 +8,7 @@ export function LabeledInput({ label, value, setValue }) {
       <Form.Control
         onChange={(e) => setValue(e.target.value)}
         value={value}
-        type="number"
-      ></Form.Control>
+        type="number"></Form.Control>
     </Form.Group>
   );
 }

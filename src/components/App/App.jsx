@@ -93,8 +93,7 @@ class App extends React.Component {
         <Navbar
           bg="dark"
           variant="dark"
-          className="justify-content-between py-3"
-        >
+          className="justify-content-between py-3">
           <span className="ml-4">
             <Navbar.Brand href="https://www.ex.co.kr/" target="_blank">
               <img
@@ -128,8 +127,7 @@ class App extends React.Component {
             activeKey={this.state.tab}
             onSelect={(selectedKey) => {
               this.setState({ tab: selectedKey });
-            }}
-          >
+            }}>
             <Nav.Item>
               <Nav.Link as={Link} to="/" eventKey="/">
                 실시간 뷰

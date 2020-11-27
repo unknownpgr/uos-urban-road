@@ -53,34 +53,29 @@ class VideoViewer extends React.Component {
                   <Form.Control
                     type="number"
                     id="snapshotTerm"
-                    placeholder="단위 : 초(second)"
-                  ></Form.Control>
+                    placeholder="단위 : 초(second)"></Form.Control>
                 </Form.Group>
                 <Form.Group className="mx-1 row">
                   <Form.Check
                     type="checkbox"
                     className="mx-1"
                     label="Top"
-                    checked="true"
-                  ></Form.Check>
+                    checked="true"></Form.Check>
                   <Form.Check
                     type="checkbox"
                     className="mx-1"
                     label="Left"
-                    checked="true"
-                  ></Form.Check>
+                    checked="true"></Form.Check>
                   <Form.Check
                     type="checkbox"
                     className="mx-1"
                     label="Right"
-                    checked="true"
-                  ></Form.Check>
+                    checked="true"></Form.Check>
                   <Form.Check
                     type="checkbox"
                     className="mx-1"
                     label="Bottom"
-                    checked="true"
-                  ></Form.Check>
+                    checked="true"></Form.Check>
                 </Form.Group>
                 <Button className="btn-primary">설정 저장</Button>
               </Form>
@@ -89,8 +84,7 @@ class VideoViewer extends React.Component {
               <VideoPlayer
                 label="top"
                 src={this.state.stream}
-                index={0}
-              ></VideoPlayer>
+                index={0}></VideoPlayer>
             </td>
             <td></td>
           </tr>
@@ -101,16 +95,14 @@ class VideoViewer extends React.Component {
               <VideoPlayer
                 label="left"
                 src={this.state.stream}
-                index={1}
-              ></VideoPlayer>
+                index={1}></VideoPlayer>
             </td>
             <td></td>
             <td>
               <VideoPlayer
                 label="right"
                 src={this.state.stream}
-                index={2}
-              ></VideoPlayer>
+                index={2}></VideoPlayer>
             </td>
           </tr>
         </tbody>
@@ -121,8 +113,7 @@ class VideoViewer extends React.Component {
               <VideoPlayer
                 label="bottom"
                 src={this.state.stream}
-                index={3}
-              ></VideoPlayer>
+                index={3}></VideoPlayer>
             </td>
             <td></td>
           </tr>
