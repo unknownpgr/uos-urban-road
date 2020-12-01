@@ -1,7 +1,7 @@
-import json
-from pdf2image import convert_from_path
 import os
+import shutil
 import sqlite3
+from PIL import Image
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -13,31 +13,29 @@ if not os.path.isdir(save_dir):
 conn = sqlite3.connect(os.path.join(current_dir, 'database.db'))
 c = conn.cursor()
 
-for pdf_file in os.listdir(read_dir):
-  if len(pdf_file) < 5:
+for src_name in os.listdir(read_dir):
+  if len(src_name) < 5:
     # It doesn't seem to be an appropriate file.
     continue
-  if pdf_file[-3:] != 'pdf':
-    # Not a pdf file
+  if src_name[-3:] != 'png':
+    # Not a png file
     continue
 
-  # Convert pdf into image and save metadata into DB
-  print('Converting', pdf_file)
-  file_name = pdf_file[:-4]
-  img = convert_from_path(os.path.join(read_dir, pdf_file))[0]
-  image_name = f'{file_name}.png'
-  img.save(os.path.join(save_dir, image_name))
+  file_name = src_name[:-4]
+  dst_name = file_name+'.png'
 
-  # Get station and section
-  station, section = file_name.split('-')
+  shutil.copyfile(os.path.join(read_dir, src_name),
+                  os.path.join(save_dir, dst_name))
 
-  # First, insert station.
+  # Frist, get station, section, and size
+  station, w, h, section = file_name.split('_')
+  # Second, insert station.
   c.execute('INSERT OR IGNORE INTO stations VALUES(?)', (station,))
   # Then, insert section'
   c.execute('INSERT INTO sections VALUES (?,?,?,?,?)',
-            (station, section, image_name, img.size[0], img.size[1]))
+            (station, section, dst_name, w, h))
 
-print('PDF files successfully converted.')
+print('Image files successfully loaded')
 c.execute('SELECT * FROM sections')
 for row in c.fetchall():
   print(row)

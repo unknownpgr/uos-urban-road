@@ -1,5 +1,7 @@
 const Database = require("sqlite-async");
 
+const TEST_SECTION = '아산천안 1공구';
+
 let table_stations = `
 CREATE TABLE stations (
     station TEXT PRIMARY KEY
@@ -72,11 +74,11 @@ async function initDB(database_file) {
     console.log('Tables successfully created');
 
     // Insert test station
-    await db.run(`INSERT INTO stations(station) VALUES("포천방향")`);
+    await db.run(`INSERT INTO stations(station) VALUES("${TEST_SECTION}")`);
     console.log(await db.all('SELECT * FROM stations'));
 
     // Insert test user
-    await db.run(`INSERT INTO users(id, pw, station) VALUES("road1","road1","포천방향")`);
+    await db.run(`INSERT INTO users(id, pw, station) VALUES("road1","road1","${TEST_SECTION}")`);
     console.log(await db.all('SELECT * FROM users'));
 
     // Insert test sensor data
