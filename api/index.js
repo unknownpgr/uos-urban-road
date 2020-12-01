@@ -173,10 +173,19 @@ app.get('/api/data', async (req, res) => {
 });
 
 // Receive sensor data from device
-app.post('/api/data', (req, res) => {
+app.post('/api/data', async (req, res) => {
   let json = req.body;
   console.log(json);
-  res.status(200).send({ msg: 'successfully received data' });
+
+  let { date, long, lat, alt, max_load, max_dist, e_inv } = json;
+
+  try {
+    await db.run('INSERT OR REPLACE INTO sensor_data (date, long, lat, alt, max_load, max_dist, e_inv) VALUES (?,?,?,?,?,?,?)',
+      date, long, lat, alt, max_load, max_dist, e_inv);
+    res.status(200).send({ msg: 'Successfully received data' }).end();
+  } catch {
+    res.status(400).send({ msg: 'Message failed' }).end();
+  }
 });
 
 // 404 Route
