@@ -52,7 +52,7 @@ while True:
         # Send image to server
         data = requests.post(SERVER_URL, files=file_dict)
         cv2.waitKey(SEND_INTERVAL)
-        print(data.json())
+        print(data.text, flush=True)
 
     except Exception:
         # If image transmission failed, try after SEND_INTERVAL_FAIL ms.
