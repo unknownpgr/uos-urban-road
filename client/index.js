@@ -39,30 +39,37 @@ let gps_lat = -1, gps_long = -1, gps_alt = -1;
 
 // Already processed files
 let processed = [];
-fs.watch(__dirname, async (event, file) => {
+fs.watch(__dirname, (event, file) => {
     if (event == 'change') return;
     if (processed.indexOf(file) >= 0) return;
     if (!file.endsWith('.csv')) return;
     processed.push(file);
     if (fs.existsSync(file)) {
-        const csv = fs.readFileSync(file, { encoding: 'utf-8' });
-        const lines = csv.split('\n');
-        const [max_load, max_dist, e_inv] = lines[7].replace(/\r/g, '').split(',').map(x => +x);
-        const data = {
-            date: Math.floor(Date.now() / 1000),
-            long: gps_long,
-            lat: gps_lat,
-            alt: gps_alt,
-            max_load,
-            max_dist,
-            e_inv
-        };
-        const dataJson = JSON.stringify(data);
-        const response = await sendData(dataJson);
-        if (LOG_SENSOR) {
-            console.log('DATA : ', data);
-            console.log('RESPONSE : ', response);
-        }
+        let intervalID = setInterval(async () => {
+            try {
+                const csv = fs.readFileSync(file, { encoding: 'utf-8' });
+                const lines = csv.split('\n');
+                const [max_load, max_dist, e_inv] = lines[7].replace(/\r/g, '').split(',').map(x => +x);
+                const data = {
+                    date: Math.floor(Date.now() / 1000),
+                    long: gps_long,
+                    lat: gps_lat,
+                    alt: gps_alt,
+                    max_load,
+                    max_dist,
+                    e_inv
+                };
+                const dataJson = JSON.stringify(data);
+                const response = await sendData(dataJson);
+                if (LOG_SENSOR) {
+                    console.log('DATA : ', data);
+                    console.log('RESPONSE : ', response);
+                }
+                clearInterval(intervalID);
+            } catch {
+                console.log('File read failed...Try after 1 second');
+            }
+        }, 1000);
     }
 });
 
@@ -87,8 +94,12 @@ fs.watch(__dirname, async (event, file) => {
 {
     const camStreaming = spawn('python', ['cam-client.py']);
     camStreaming.stdout.on('data', (data) => {
-        let res = JSON.parse(data.toString());
-        if (LOG_STREAM) console.log('Camera streaming = ', res);
+        try {
+            let res = JSON.parse(data.toString());
+            if (LOG_STREAM) console.log('Camera streaming = ', res);
+        } catch {
+            console.log("Camera data sending failed");
+        }
     });
 }
 
