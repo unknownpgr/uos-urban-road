@@ -1,3 +1,4 @@
+// Download js-generated data as file at browser
 export function saveFile(fileName, data, type = "text/plain") {
   let file = new Blob([data], { type });
   let a = document.createElement("a");

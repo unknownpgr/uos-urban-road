@@ -1,12 +1,12 @@
-import React from "react";
-import AppContext from "../Context/AppContext";
-import { Redirect, Route, withRouter, Link } from "react-router-dom";
-import axios from "axios";
-import { Navbar, Nav, Button, Container } from "react-bootstrap";
-import CadViewer from "../CadViewer/CadViewer";
-import VideoViewer from "../VideoViewer/VideoViewer";
-import "./app.scss";
-import { Clock } from "./Clock";
+import React from 'react';
+import AppContext from '../Context/AppContext';
+import { Redirect, Route, withRouter, Link } from 'react-router-dom';
+import axios from 'axios';
+import { Navbar, Nav, Button, Container } from 'react-bootstrap';
+import CadViewer from '../CadViewer/CadViewer';
+import VideoViewer from '../VideoViewer/VideoViewer';
+import './app.scss';
+import { Clock } from './Clock';
 
 class App extends React.Component {
   static contextType = AppContext;
@@ -15,8 +15,8 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      username: "",
-      tab: "view",
+      username: '',
+      tab: 'view',
       sections: [],
     };
 
@@ -29,7 +29,7 @@ class App extends React.Component {
 
     // Get username
     axios
-      .get("/api/username?token=" + this.context.token)
+      .get('/api/username?token=' + this.context.token)
       .then((res) => {
         this.setState({ username: res.data.data });
       })
@@ -41,7 +41,7 @@ class App extends React.Component {
       });
 
     // Get station list
-    axios.get("/api/sections?token=" + this.context.token).then((res) => {
+    axios.get('/api/sections?token=' + this.context.token).then((res) => {
       if (res.data) {
         this.setState({ ...res.data });
       }
@@ -50,7 +50,7 @@ class App extends React.Component {
 
   logout() {
     axios
-      .post("/api/logout?token=" + this.context.token)
+      .post('/api/logout?token=' + this.context.token)
       .then(() => {
         this.context.setToken(undefined);
       })
@@ -61,7 +61,7 @@ class App extends React.Component {
 
   render() {
     // Go to login page if user is not logged in.
-    if (!this.context.token) return <Redirect to="/login"></Redirect>;
+    if (!this.context.token) return <Redirect to='/login'></Redirect>;
 
     let tabs = [];
     let routes = [];
@@ -88,21 +88,20 @@ class App extends React.Component {
     });
 
     return (
-      <div className="app">
+      <div className='app'>
         {/* Top bar */}
         <Navbar
-          bg="dark"
-          variant="dark"
-          className="justify-content-between py-3"
-        >
-          <span className="ml-4">
-            <Navbar.Brand href="https://www.ex.co.kr/" target="_blank">
+          bg='dark'
+          variant='dark'
+          className='justify-content-between py-3'>
+          <span className='ml-4'>
+            <Navbar.Brand href='https://www.ex.co.kr/' target='_blank'>
               <img
-                src="/img/logo.png"
-                height="20"
-                className="d-inline-block align-top"
-                style={{ marginTop: "5.5px" }}
-                alt=""
+                src='/img/logo.png'
+                height='20'
+                className='d-inline-block align-top'
+                style={{ marginTop: '5.5px' }}
+                alt=''
               />
             </Navbar.Brand>
             <Navbar.Brand>토공다짐도 자동화시스템</Navbar.Brand>
@@ -110,47 +109,46 @@ class App extends React.Component {
           <Navbar.Text>
             <Clock />
           </Navbar.Text>
-          <span className="mr-4">
-            <Navbar.Text className="mr-4">
+          <span className='mr-4'>
+            <Navbar.Text className='mr-4'>
               You are logged in as {this.state.username}
             </Navbar.Text>
-            <Button className="btn-secondary" onClick={this.logout}>
+            <Button className='btn-secondary' onClick={this.logout}>
               Logout
             </Button>
           </span>
         </Navbar>
 
         {/* Main container */}
-        <Container className="mt-4 mainContainer">
+        <Container className='mt-4 mainContainer'>
           {/* Horizontal Navigation */}
           <Nav
-            variant="tabs"
+            variant='tabs'
             activeKey={this.state.tab}
             onSelect={(selectedKey) => {
               this.setState({ tab: selectedKey });
-            }}
-          >
+            }}>
             <Nav.Item>
-              <Nav.Link as={Link} to="/" eventKey="/">
+              <Nav.Link as={Link} to='/' eventKey='/'>
                 실시간 뷰
               </Nav.Link>
             </Nav.Item>
             {tabs}
           </Nav>
 
-          <div className="viewers">
-            <Route path="/cads">{routes}</Route>
-            <Route exact path="/">
+          <div className='viewers'>
+            <Route path='/cads'>{routes}</Route>
+            <Route exact path='/'>
               <VideoViewer></VideoViewer>
             </Route>
           </div>
         </Container>
 
         {/* Footer */}
-        <footer className="page-footer gray pt-4 h-25">
-          <div className="footer-copyright text-center py-4">
+        <footer className='page-footer gray pt-4 h-25'>
+          <div className='footer-copyright text-center py-4'>
             © 2020 Copyright :
-            <a href="http://urbanscience.uos.ac.kr/">
+            <a href='http://urbanscience.uos.ac.kr/'>
               서울시립대학교 국제도시과학대학원
             </a>
           </div>

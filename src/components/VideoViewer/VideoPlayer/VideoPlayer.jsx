@@ -1,32 +1,22 @@
-import React, { useRef } from "react";
-import "./videoPlayer.scss";
+import React, { useRef } from 'react';
+import './videoPlayer.scss';
 
 const INTERVAL_RETRY = 2000;
 const INTERVAL_REFRESH = 80;
 
-function VideoPlayer({ label, src }) {
-  let img = useRef(null);
-
-  function update() {
-    // Set current milisecond as param just to prevent caching.
-    if (img.current) img.current.src = src + "?hash=" + Date.now();
-    else setTimeout(update, INTERVAL_RETRY);
+function VideoPlayer({ label, src, index }) {
+  let cnv = useRef(null);
+  if (cnv.current != null && src != null) {
+    let ctx = cnv.current.getContext('2d');
+    ctx.drawImage(src, 0, (-src.height * index) / 4);
   }
-
-  update();
-
   return (
-    <div className="videoPlayer">
-      <div className="label">{label}</div>
+    <div className='videoPlayer'>
+      <div className='label'>{label}</div>
       {src ? (
-        <img
-          ref={img}
-          onLoad={() => setTimeout(update, INTERVAL_REFRESH)}
-          onError={() => setTimeout(update, INTERVAL_RETRY)}
-          alt="Stream is not available now"
-        ></img>
+        <canvas width={src.width} height={src.height / 4} ref={cnv}></canvas>
       ) : (
-        <div className="error">No stream source supplied.</div>
+        <div className='error'>No stream source supplied.</div>
       )}
     </div>
   );
