@@ -188,6 +188,23 @@ app.post('/api/data', async (req, res) => {
   }
 });
 
+// Simple database query server.
+// TODO : Implement authentication. Runing arbitary SQL is very dangerous.
+app.post('/api/temp/database', async (req, res) => {
+  let { query } = req.body;
+  if (!query) {
+    res.send({ status: 'ERR', err: 'Empty query' });
+  } else {
+    try {
+      let result = await db.all(query);
+      res.send(JSON.stringify({ status: 'OK', result: result }));
+    } catch (err) {
+      console.log(err);
+      res.send({ status: 'ERR', err });
+    }
+  }
+});
+
 // 404 Route
 app.get("*", function (req, res) {
   res.status(404).send("Unknown api detected.");
