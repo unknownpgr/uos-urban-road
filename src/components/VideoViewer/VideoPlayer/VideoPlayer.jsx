@@ -1,9 +1,13 @@
 import React, { useRef } from 'react';
 import './videoPlayer.scss';
 
-const INTERVAL_RETRY = 2000;
-const INTERVAL_REFRESH = 80;
-
+/**
+ * Draw a part of given image(src) on canvas.
+ * Assume that given image is a vertically concatenated image of 4 small sub-image.
+ * Index is the index of sub-image to draw
+ *
+ * @param {String,Image,Number} parameter
+ */
 function VideoPlayer({ label, src, index }) {
   let cnv = useRef(null);
   if (cnv.current != null && src != null) {
