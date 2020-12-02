@@ -4,7 +4,7 @@ const http = require('http');
 const { spawn } = require('child_process');
 
 const LOG_SENSOR = true;
-const LOG_GPS = false;
+const LOG_GPS = true;
 const LOG_STREAM = false;
 
 function sendData(jsonString) {
