@@ -458,10 +458,15 @@ class CadViewer extends React.Component {
       alertState = null;
     }
 
+    let viewTitle = '현장 CAD';
+    if (this.section && this.section.section) {
+      viewTitle = this.section.station + ' ' + this.section.section;
+    }
+
     this.repaint();
     return (
       <div className='cadViewer'>
-        <h1 className='m-4 text-center'>현장 CAD</h1>
+        <h1 className='m-4 text-center'>{viewTitle}</h1>
         <ClickMenu
           show={this.state.isMenuVisible}
           x={this.state.menuX}
