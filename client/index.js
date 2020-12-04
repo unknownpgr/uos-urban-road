@@ -124,7 +124,7 @@ fs.watch(__dirname, (event, file) => {
 
 // Camera streaming subprocess
 {
-    const camStreaming = spawn('python', ['cam-client.py']);
+    const camStreaming = spawn('python', ['cam-low-client.py']);
     camStreaming.stdout.on('data', (data) => {
         try {
             // Just print stdout
