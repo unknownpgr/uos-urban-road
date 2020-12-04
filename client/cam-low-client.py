@@ -24,26 +24,26 @@ while True:
             cap = cv2.VideoCapture(CAMERA_INDEXES[i])
             ret, img = cap.read()
             if ret:
+                # Get image and update concatentated image
                 img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT))
                 img_concat[IMG_HEIGHT*i: IMG_HEIGHT*(i+1), :] = img
+
+                # Encode image into byte array
+                is_success, im_buf_arr = cv2.imencode(".jpg", img_concat)
+                byte_im = im_buf_arr.tobytes()
+                file_dict = {"stream": byte_im}
+
+                # Send image to server
+                data = requests.post(SERVER_URL, files=file_dict)
+                if data.status_code == 200:
+                    print(data.text, flush=True)
             else:
                 img_concat[IMG_HEIGHT*i: IMG_HEIGHT*(i+1), :] = img_empty
             cap.release()
 
-        # Encode image into byte array
-        is_success, im_buf_arr = cv2.imencode(".jpg", img_concat)
-        byte_im = im_buf_arr.tobytes()
-        file_dict = {"stream": byte_im}
-
-        # Send image to server
-        data = requests.post(SERVER_URL, files=file_dict)
-        if data.status_code == 200:
-            print(data.text, flush=True)
-
     except Exception as e:
         # If image transmission failed, try after SEND_INTERVAL_FAIL ms.
-        print(
-            f"Stream transmission failed. Retry after {SEND_INTERVAL_FAIL}s...")
+        print(f"Streamimg failed. Retry after {SEND_INTERVAL_FAIL}s...")
         time.sleep(SEND_INTERVAL_FAIL)
         print('Reason : ', e)
 
