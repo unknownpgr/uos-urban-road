@@ -139,7 +139,8 @@ app.post('/api/stream', upload.single('stream'), async (req, res) => {
 
 // Get uploaded stream
 app.get('/api/stream', async (req, res) => {
-  if ((Date.now() - streamLastUploaded) > 3000) {
+  // If there are no incoming stream for 10 seconds, assume that client has been stopped.
+  if ((Date.now() - streamLastUploaded) > 10000) {
     streamQueue = [];
     await clearStreamCache();
   }
