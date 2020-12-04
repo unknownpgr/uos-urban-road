@@ -21,7 +21,7 @@ def parse_pos(pos_string, int_part):
     return degree+minute/60
 
 
-with open("log.txt", "a") as log:
+with open("gps-client.log", "a") as log:
     while True:
         try:
             # Detect available ports
