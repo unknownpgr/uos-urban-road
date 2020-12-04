@@ -33,9 +33,7 @@ function sendData(jsonString) {
     });
 }
 
-
 let gps_lat = -1, gps_long = -1, gps_alt = -1;
-
 
 // Already processed files
 let processed = [];
@@ -77,12 +75,19 @@ fs.watch(__dirname, (event, file) => {
 {
     const gpsClient = spawn('python', ['gps-client.py']);
     gpsClient.stdout.on('data', (data) => {
+        if (!data) return;
+        let dataString = data.toString().replace(/\n|\r/g, '');
         try {
-            let [a, b, c] = data.toString().replace(/\n|\r/g, '').split(',');
-            gps_lat = +a;
-            gps_long = +b;
-            gps_alt = +c;
-            if (LOG_GPS) console.log('Current position = ', gps_lat, gps_long, gps_alt, '(Lat,Long,Alt)');
+            if (dataString.startsWith('DATA')) {
+                dataString = dataString.substring(4);
+                let [a, b, c] = dataString.split(',');
+                gps_lat = +a;
+                gps_long = +b;
+                gps_alt = +c;
+                if (LOG_GPS) console.log('Current position = ', gps_lat, gps_long, gps_alt, '(Lat,Long,Alt)');
+            } else {
+                if (LOG_GPS) console.log(dataString);
+            }
         } catch {
             gps_lat = gps_long = gps_alt = -2;
         }
