@@ -29,7 +29,7 @@ const SENSOR_DATA_COLUMN = {
   long: 'Longtitude',
   lat: 'Latitude',
   alt: 'Altitude(m)',
-  max_load: 'Max Load(kN)',
+  max_load: 'Max Load(kg)',
   max_dist: 'Max Distance(mm)',
   e_inv: 'E-Inverse',
 };
