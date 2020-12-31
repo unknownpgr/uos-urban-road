@@ -1,7 +1,7 @@
 import React from 'react';
 import AppContext from '../Context/AppContext';
 import { Redirect, Route, withRouter, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../libs/api';
 import { Navbar, Nav, Button, Container } from 'react-bootstrap';
 import CadViewer from '../CadViewer/CadViewer';
 import VideoViewer from '../VideoViewer/VideoViewer';
@@ -28,8 +28,8 @@ class App extends React.Component {
     this.setState({ tab });
 
     // Get username
-    axios
-      .get('/api/username?token=' + this.context.token)
+    api
+      .get('/username?token=' + this.context.token)
       .then((res) => {
         this.setState({ username: res.data.data });
       })
@@ -41,7 +41,7 @@ class App extends React.Component {
       });
 
     // Get station list
-    axios.get('/api/sections?token=' + this.context.token).then((res) => {
+    api.get('/sections?token=' + this.context.token).then((res) => {
       if (res.data) {
         this.setState({ ...res.data });
       }
@@ -49,8 +49,8 @@ class App extends React.Component {
   }
 
   logout() {
-    axios
-      .post('/api/logout?token=' + this.context.token)
+    api
+      .post('/logout?token=' + this.context.token)
       .then(() => {
         this.context.setToken(undefined);
       })

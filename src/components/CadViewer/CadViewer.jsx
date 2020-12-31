@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import api from '../../libs/api';
 import { Alert, Button } from 'react-bootstrap';
 import './cadViewer.scss';
 import AppContext from '../Context/AppContext';
@@ -129,8 +129,8 @@ class CadViewer extends React.Component {
       width,
       Math.min(this.state.cali['Point C'].imgY, this.state.cali['Point D'].imgY)
     );
-    axios
-      .get('/api/data', {
+    api
+      .get('/data', {
         params: {
           xs,
           ys,
@@ -353,7 +353,7 @@ class CadViewer extends React.Component {
       this.state.cali['Point B']
     );
     this.setState({ isInputVisible: false, M });
-    axios.post('/api/cali', { data: this.state.cali, ...this.section });
+    api.post('/cali', { data: this.state.cali, ...this.section });
     this.loadSensorData(M);
   }
 
@@ -387,10 +387,8 @@ class CadViewer extends React.Component {
       });
 
       // Get calibration data
-      let dataProc = axios
-        .get(
-          `/api/cali?station=${station}&section=${encodeURIComponent(section)}`
-        )
+      let dataProc = api
+        .get(`/cali?station=${station}&section=${encodeURIComponent(section)}`)
         .then((x) => x.data)
         .then((result) => {
           // Update calibration points

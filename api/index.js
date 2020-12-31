@@ -8,7 +8,7 @@ const loginSystem = require("./login");
 const path = require('path');
 const fs = require('fs').promises;
 
-const PORT = 1501;
+const PORT = 80;
 const STREAM_UPLOAD_PATH = path.join(__dirname, 'tmp');
 const STREAM_QUEUE_SIZE = 10;
 
@@ -60,7 +60,7 @@ app.use((req, res, next) => {
 });
 
 // Set login submit
-app.post("/api/login", async (req, res) => {
+app.post("/login", async (req, res) => {
   let { id, pw } = req.body;
   try {
     let token = await login(id, pw);
@@ -73,19 +73,19 @@ app.post("/api/login", async (req, res) => {
 });
 
 // Logout
-app.post("/api/logout", (req, res) => {
+app.post("/logout", (req, res) => {
   if (logout(req.token)) res.send({});
   else res.status(401).send({ err: "Failed to logout" });
 });
 
 // Get username
-app.get("/api/username", (req, res) => {
+app.get("/username", (req, res) => {
   if (req.user) res.send({ data: req.user.id });
   else res.status(401).send({ data: "Dummy", err: "You are not logged in." });
 });
 
 // Get CAD file metadata
-app.get("/api/sections", async (req, res) => {
+app.get("/sections", async (req, res) => {
   let { user } = req;
   if (user == null) {
     res.status(401).send({ data: "Dummy", err: "You are not logged in." });
@@ -97,7 +97,7 @@ app.get("/api/sections", async (req, res) => {
 });
 
 // Store pivot data of an station
-app.post("/api/cali", async (req, res) => {
+app.post("/cali", async (req, res) => {
   try {
     let { data, station, section } = req.body;
     let keys = Object.keys(data);
@@ -113,14 +113,14 @@ app.post("/api/cali", async (req, res) => {
 });
 
 // Get pivots of an station
-app.get('/api/cali', async (req, res) => {
+app.get('/cali', async (req, res) => {
   let { station, section } = req.query;
   let data = await db.all('SELECT * FROM calibration WHERE station=? AND section=?', [station, section]);
   res.send({ data });
 });
 
 // Upload stream
-app.post('/api/stream', upload.single('stream'), async (req, res) => {
+app.post('/stream', upload.single('stream'), async (req, res) => {
   let { path } = req.file;
   if (!path) res.status(400).send({ err: 'No stream included in data' });
   else {
@@ -138,7 +138,7 @@ app.post('/api/stream', upload.single('stream'), async (req, res) => {
 });
 
 // Get uploaded stream
-app.get('/api/stream', async (req, res) => {
+app.get('/stream', async (req, res) => {
   // If there are no incoming stream for 10 seconds, assume that client has been stopped.
   if ((Date.now() - streamLastUploaded) > 10000) {
     streamQueue = [];
@@ -153,7 +153,7 @@ app.get('/api/stream', async (req, res) => {
 });
 
 // Serve sensor data
-app.get('/api/data', async (req, res) => {
+app.get('/data', async (req, res) => {
   let { xs, xe, ys, ye } = req.query;
 
   // Swap data
@@ -174,7 +174,7 @@ app.get('/api/data', async (req, res) => {
 });
 
 // Receive sensor data from device
-app.post('/api/data', async (req, res) => {
+app.post('/data', async (req, res) => {
   let json = req.body;
   console.log(json);
 
@@ -191,7 +191,7 @@ app.post('/api/data', async (req, res) => {
 
 // Simple database query server.
 // TODO : Implement authentication. Runing arbitary SQL is very dangerous.
-app.post('/api/temp/database', async (req, res) => {
+app.post('/temp/database', async (req, res) => {
   let { query } = req.body;
   if (!query) {
     res.send({ status: 'ERR', err: 'Empty query' });
