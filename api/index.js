@@ -8,14 +8,16 @@ const loginSystem = require("./login");
 const path = require('path');
 const fs = require('fs').promises;
 
-const PORT = 1501;
+const PORT = 80;
 const STREAM_UPLOAD_PATH = path.join(__dirname, 'tmp');
 const STREAM_QUEUE_SIZE = 10;
+const DB_PATH = path.join(__dirname, "database.db");
+
 
 // Database will be assigned in the main function at bottom, before the server started.
 let db;
 
-const { login, logout, auth } = loginSystem();
+let { login, logout, auth } = loginSystem(DB_PATH);
 const upload = multer({ dest: STREAM_UPLOAD_PATH });
 let streamQueue = [];
 let streamLastUploaded = 0;
@@ -23,6 +25,23 @@ let streamLastUploaded = 0;
 async function clearStreamCache() {
   const files = await fs.readdir(STREAM_UPLOAD_PATH);
   for (const file of files) fs.unlink(path.join(STREAM_UPLOAD_PATH, file));
+}
+
+/**
+ * Executes a shell command and return it as a Promise.
+ * @param cmd {string}
+ * @return {Promise<string>}
+ */
+function execShellCommand(cmd) {
+  const exec = require('child_process').exec;
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        console.warn(error);
+      }
+      resolve(stdout ? stdout : stderr);
+    });
+  });
 }
 
 // Create web server
@@ -60,7 +79,7 @@ app.use((req, res, next) => {
 });
 
 // Set login submit
-app.post("/api/login", async (req, res) => {
+app.post("/login", async (req, res) => {
   let { id, pw } = req.body;
   try {
     let token = await login(id, pw);
@@ -73,19 +92,19 @@ app.post("/api/login", async (req, res) => {
 });
 
 // Logout
-app.post("/api/logout", (req, res) => {
+app.post("/logout", (req, res) => {
   if (logout(req.token)) res.send({});
   else res.status(401).send({ err: "Failed to logout" });
 });
 
 // Get username
-app.get("/api/username", (req, res) => {
+app.get("/username", (req, res) => {
   if (req.user) res.send({ data: req.user.id });
   else res.status(401).send({ data: "Dummy", err: "You are not logged in." });
 });
 
 // Get CAD file metadata
-app.get("/api/sections", async (req, res) => {
+app.get("/sections", async (req, res) => {
   let { user } = req;
   if (user == null) {
     res.status(401).send({ data: "Dummy", err: "You are not logged in." });
@@ -97,7 +116,7 @@ app.get("/api/sections", async (req, res) => {
 });
 
 // Store pivot data of an station
-app.post("/api/cali", async (req, res) => {
+app.post("/cali", async (req, res) => {
   try {
     let { data, station, section } = req.body;
     let keys = Object.keys(data);
@@ -113,14 +132,14 @@ app.post("/api/cali", async (req, res) => {
 });
 
 // Get pivots of an station
-app.get('/api/cali', async (req, res) => {
+app.get('/cali', async (req, res) => {
   let { station, section } = req.query;
   let data = await db.all('SELECT * FROM calibration WHERE station=? AND section=?', [station, section]);
   res.send({ data });
 });
 
 // Upload stream
-app.post('/api/stream', upload.single('stream'), async (req, res) => {
+app.post('/stream', upload.single('stream'), async (req, res) => {
   let { path } = req.file;
   if (!path) res.status(400).send({ err: 'No stream included in data' });
   else {
@@ -138,7 +157,7 @@ app.post('/api/stream', upload.single('stream'), async (req, res) => {
 });
 
 // Get uploaded stream
-app.get('/api/stream', async (req, res) => {
+app.get('/stream', async (req, res) => {
   // If there are no incoming stream for 10 seconds, assume that client has been stopped.
   if ((Date.now() - streamLastUploaded) > 10000) {
     streamQueue = [];
@@ -153,7 +172,7 @@ app.get('/api/stream', async (req, res) => {
 });
 
 // Serve sensor data
-app.get('/api/data', async (req, res) => {
+app.get('/data', async (req, res) => {
   let { xs, xe, ys, ye } = req.query;
 
   // Swap data
@@ -174,7 +193,7 @@ app.get('/api/data', async (req, res) => {
 });
 
 // Receive sensor data from device
-app.post('/api/data', async (req, res) => {
+app.post('/data', async (req, res) => {
   let json = req.body;
   console.log(json);
 
@@ -189,9 +208,58 @@ app.post('/api/data', async (req, res) => {
   }
 });
 
+app.get('/cads', async (req, res) => {
+  let files = (await fs.readdir(path.join(__dirname, '../CAD files')))
+    .filter(x => x.endsWith('.png'));
+  res.send(files);
+});
+
+app.post('/rename', async (req, res) => {
+  let change = req.body;
+  function isDanger(name) {
+    if (name.indexOf('/') >= 0) return true;
+    if (name.indexOf('\\') >= 0) return true;
+    if (name.indexOf('..') >= 0) return true;
+    return false;
+  }
+
+  try {
+    await Promise.all(change.map(([fileName, newName]) => {
+      // Check if parameter is properly set
+      if (!fileName.endsWith('.png')) return;
+      if (isDanger(newName)) return;
+      if (isDanger(fileName)) return;
+      if (newName === '') {
+        // If new name is empty, remove it.
+        return fs.unlink(path.join(__dirname, '../CAD files', fileName));
+      } else {
+        // Else, just rename it.
+        let newFileName = fileName.split('_')[0] + '_' + newName + '.png';
+        return fs.rename(path.join(__dirname, '../CAD files', fileName), path.join(__dirname, '../CAD files', newFileName));
+      }
+    }));
+
+    // Update database by calling register.py
+    let result = await execShellCommand('python ' + path.join(__dirname, 'register.py'));
+    console.log(result);
+
+    // Response
+    res.status(200).send({ msg: 'Successfully updated cad files' }).end();
+  } catch (e) {
+    res.status(400).send({ msg: 'Update failed with error : ' + e, data: change }).end();
+  }
+
+});
+
+app.get('/cadimg/:fileName', (req, res) => {
+  let imgPath = path.join(__dirname, '../CAD files', req.params.fileName);
+  console.log(imgPath);
+  res.sendFile(imgPath);
+});
+
 // Simple database query server.
 // TODO : Implement authentication. Runing arbitary SQL is very dangerous.
-app.post('/api/temp/database', async (req, res) => {
+app.post('/temp/database', async (req, res) => {
   let { query } = req.body;
   if (!query) {
     res.send({ status: 'ERR', err: 'Empty query' });
@@ -214,7 +282,7 @@ app.get("*", function (req, res) {
 // Run server
 async function main() {
   // Open database
-  db = await Database.open(path.join(__dirname, "database.db"));
+  db = await Database.open(DB_PATH);
   console.log("Database connected.");
 
   // Clear stream cache

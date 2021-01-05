@@ -1,8 +1,8 @@
 import React from 'react';
 import './login.scss';
 import { Container, Card, Form, Alert } from 'react-bootstrap';
-import axios from 'axios';
-import AppContext from '../Context/AppContext';
+import api from 'libs/api';
+import AppContext from 'contexts/AppContext';
 import { Redirect } from 'react-router-dom';
 
 class Login extends React.Component {
@@ -46,8 +46,7 @@ class Login extends React.Component {
     // Do login process
     try {
       this.setState({ isLoading: true });
-      let host = '';
-      let res = await axios.post(host + '/api/login', {
+      let res = await api.post('/login', {
         id: this.state.id,
         pw: this.state.pw,
       });

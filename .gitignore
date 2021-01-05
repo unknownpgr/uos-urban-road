@@ -120,3 +120,5 @@ build/
 database.db
 test.js
 tmp/
+
+.vscode

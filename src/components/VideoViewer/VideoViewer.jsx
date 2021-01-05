@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Form } from 'react-bootstrap';
-import { loadImage } from '../../libs/imageUtil';
+import api from 'libs/api';
+import { loadImage } from 'libs/imageUtil';
 import VideoPlayer from './VideoPlayer/VideoPlayer';
 import './videoViewer.scss';
 
@@ -22,7 +23,7 @@ class VideoViewer extends React.Component {
   async updateStream() {
     if (!this.state.isComponentMounted) return;
     try {
-      let result = await loadImage('/api/stream?hash=' + Date.now());
+      let result = await loadImage(api.host + '/stream?hash=' + Date.now());
       this.setState({ stream: result });
       setTimeout(this.updateStream, INTERVAL_REFRESH);
     } catch {

@@ -1,0 +1,16 @@
+.editor{
+.edit-field{
+  margin: 2rem;
+  background-color: #666;
+  padding: 1rem;
+  color:white;
+  
+  .preview{
+    width:80%;
+    height: 200px;
+    object-position: 100% 0;
+    object-fit: cover;
+    margin: 1rem;
+  }
+}
+}

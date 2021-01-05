@@ -1,12 +1,13 @@
 import React from 'react';
-import AppContext from '../Context/AppContext';
+import AppContext from 'contexts/AppContext';
 import { Redirect, Route, withRouter, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from 'libs/api';
 import { Navbar, Nav, Button, Container } from 'react-bootstrap';
-import CadViewer from '../CadViewer/CadViewer';
-import VideoViewer from '../VideoViewer/VideoViewer';
+import CadViewer from 'components/CadViewer/CadViewer';
+import VideoViewer from 'components/VideoViewer/VideoViewer';
 import './app.scss';
 import { Clock } from './Clock';
+import Editor from 'components/Editor/Editor';
 
 class App extends React.Component {
   static contextType = AppContext;
@@ -28,8 +29,8 @@ class App extends React.Component {
     this.setState({ tab });
 
     // Get username
-    axios
-      .get('/api/username?token=' + this.context.token)
+    api
+      .get('/username?token=' + this.context.token)
       .then((res) => {
         this.setState({ username: res.data.data });
       })
@@ -41,7 +42,7 @@ class App extends React.Component {
       });
 
     // Get station list
-    axios.get('/api/sections?token=' + this.context.token).then((res) => {
+    api.get('/sections?token=' + this.context.token).then((res) => {
       if (res.data) {
         this.setState({ ...res.data });
       }
@@ -49,8 +50,8 @@ class App extends React.Component {
   }
 
   logout() {
-    axios
-      .post('/api/logout?token=' + this.context.token)
+    api
+      .post('/logout?token=' + this.context.token)
       .then(() => {
         this.context.setToken(undefined);
       })
@@ -138,9 +139,8 @@ class App extends React.Component {
 
           <div className='viewers'>
             <Route path='/cads'>{routes}</Route>
-            <Route exact path='/'>
-              <VideoViewer></VideoViewer>
-            </Route>
+            <Route exact path='/' component={VideoViewer}/>
+            <Route exact path='/edit' component={Editor}/>
           </div>
         </Container>
 
