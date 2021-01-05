@@ -19,26 +19,26 @@ for src_name in os.listdir(read_dir):
     if len(src_name) < 5:
         # It doesn't seem to be an appropriate file.
         continue
-    if src_name[-3:] != 'png':
+    if src_name[-4:] != '.png':
         # Not a png file
         continue
 
     file_name = src_name[:-4]
-    dst_name = file_name+'.png'
+    full_path = os.path.join(read_dir, src_name)
 
-    shutil.copyfile(os.path.join(read_dir, src_name),
-                    os.path.join(save_dir, dst_name))
+    shutil.copyfile(full_path, os.path.join(save_dir, src_name))
 
     # Frist, get station, section, and size
-    station, w, h, section = file_name.split('_')
+    station, section = file_name.split('_')
+    w, h = Image.open(full_path).size
 
-    print(file_name, station, section)
+    print(file_name, station, section, w, h)
 
     # Second, insert station.
-    c.execute('INSERT OR IGNORE INTO stations VALUES(?)', (station,))
+    c.execute('INSERT OR REPLACE INTO stations VALUES(?)', (station,))
     # Then, insert section'
-    c.execute('INSERT OR IGNORE INTO sections VALUES (?,?,?,?,?)',
-              (station, section, dst_name, w, h))
+    c.execute('INSERT OR REPLACE INTO sections VALUES (?,?,?,?,?)',
+              (station, section, src_name, w, h))
 
 print('Image files successfully loaded')
 c.execute('SELECT * FROM sections')
