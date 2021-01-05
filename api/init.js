@@ -1,4 +1,5 @@
 const Database = require("sqlite-async");
+const path = require('path');
 
 const TEST_SECTION_1 = '아산천안 1공구';
 const TEST_SECTION_2 = '한국도로공사 교통연구원';
@@ -109,4 +110,4 @@ async function initDB(database_file) {
     console.log('Database successfully initialized.');
 }
 
-initDB('database.db');
+initDB(path.join(__dirname, 'database.db'));
