@@ -27,6 +27,23 @@ async function clearStreamCache() {
   for (const file of files) fs.unlink(path.join(STREAM_UPLOAD_PATH, file));
 }
 
+/**
+ * Executes a shell command and return it as a Promise.
+ * @param cmd {string}
+ * @return {Promise<string>}
+ */
+function execShellCommand(cmd) {
+  const exec = require('child_process').exec;
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        console.warn(error);
+      }
+      resolve(stdout ? stdout : stderr);
+    });
+  });
+}
+
 // Create web server
 let app = express();
 
@@ -191,16 +208,53 @@ app.post('/data', async (req, res) => {
   }
 });
 
+app.get('/cads', async (req, res) => {
+  let files = (await fs.readdir(path.join(__dirname, '../CAD files')))
+    .filter(x => x.endsWith('.png'));
+  res.send(files);
+});
+
 app.post('/rename', async (req, res) => {
   let change = req.body;
+  function isDanger(name) {
+    if (name.indexOf('/') >= 0) return true;
+    if (name.indexOf('\\') >= 0) return true;
+    if (name.indexOf('..') >= 0) return true;
+    return false;
+  }
+
   try {
-    await Promise.all(change.map(([bef, after]) => {
-      console.log(bef, after);
+    await Promise.all(change.map(([fileName, newName]) => {
+      // Check if parameter is properly set
+      if (!fileName.endsWith('.png')) return;
+      if (isDanger(newName)) return;
+      if (isDanger(fileName)) return;
+      if (newName === '') {
+        // If new name is empty, remove it.
+        return fs.unlink(path.join(__dirname, '../CAD files', fileName));
+      } else {
+        // Else, just rename it.
+        let newFileName = fileName.split('_')[0] + '_' + newName + '.png';
+        return fs.rename(path.join(__dirname, '../CAD files', fileName), path.join(__dirname, '../CAD files', newFileName));
+      }
     }));
+
+    // Update database by calling register.py
+    let result = await execShellCommand('python ' + path.join(__dirname, 'register.py'));
+    console.log(result);
+
+    // Response
     res.status(200).send({ msg: 'Successfully updated cad files' }).end();
   } catch (e) {
-    res.status(400).send({ msg: 'Message failed' }).end();
+    res.status(400).send({ msg: 'Update failed with error : ' + e, data: change }).end();
   }
+
+});
+
+app.get('/cadimg/:fileName', (req, res) => {
+  let imgPath = path.join(__dirname, '../CAD files', req.params.fileName);
+  console.log(imgPath);
+  res.sendFile(imgPath);
 });
 
 // Simple database query server.

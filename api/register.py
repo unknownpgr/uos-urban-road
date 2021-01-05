@@ -15,6 +15,10 @@ if not os.path.isdir(save_dir):
 conn = sqlite3.connect(db_dir)
 c = conn.cursor()
 
+# Remove existing stations and sections
+c.execute('DELETE FROM sections')
+c.execute('DELETE FROM stations')
+
 for src_name in os.listdir(read_dir):
     if len(src_name) < 5:
         # It doesn't seem to be an appropriate file.
@@ -28,15 +32,15 @@ for src_name in os.listdir(read_dir):
 
     shutil.copyfile(full_path, os.path.join(save_dir, src_name))
 
-    # Frist, get station, section, and size
+    # Get station, section, and size
     station, section = file_name.split('_')
     w, h = Image.open(full_path).size
-
     print(file_name, station, section, w, h)
 
-    # Second, insert station.
-    c.execute('INSERT OR REPLACE INTO stations VALUES(?)', (station,))
-    # Then, insert section'
+    # Insert station.
+    c.execute('INSERT OR IGNORE INTO stations VALUES(?)', (station,))
+
+    # Insert section.
     c.execute('INSERT OR REPLACE INTO sections VALUES (?,?,?,?,?)',
               (station, section, src_name, w, h))
 
