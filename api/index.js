@@ -11,11 +11,13 @@ const fs = require('fs').promises;
 const PORT = 80;
 const STREAM_UPLOAD_PATH = path.join(__dirname, 'tmp');
 const STREAM_QUEUE_SIZE = 10;
+const DB_PATH = path.join(__dirname, "database.db");
+
 
 // Database will be assigned in the main function at bottom, before the server started.
 let db;
 
-const { login, logout, auth } = loginSystem();
+let { login, logout, auth } = loginSystem(DB_PATH);
 const upload = multer({ dest: STREAM_UPLOAD_PATH });
 let streamQueue = [];
 let streamLastUploaded = 0;

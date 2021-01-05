@@ -1,17 +1,19 @@
-let tokenSystem = require("./token");
+const tokenSystem = require("./token");
 const Database = require("sqlite-async");
-
-let db;
-(async () => db = await Database.open("database.db"))();
 
 /**
  * @param {Number} expireTime
  * @param {String} tokenKey
  */
-function loginSystem(expireTime = 1000 * 60 * 60, tokenKey = "token") {
+function loginSystem(databasePath, expireTime = 1000 * 60 * 60, tokenKey = "token") {
   let { create, check, expire } = tokenSystem(expireTime, tokenKey);
   let session = {};
+  let db;
+
+  (async () => db = await Database.open(databasePath))();
+
   async function login(id, pw) {
+    console.log(id, pw);
     let row = await db.get(
       "SELECT id FROM users WHERE id = ? AND pw = ?",
       [id, pw]);
