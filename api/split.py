@@ -1,12 +1,15 @@
 from pdf2image import convert_from_path
 import os
+import glob
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
 read_dir = os.path.join(current_dir, '../CAD files')
-save_dir = os.path.join(current_dir, '../public/img/cad')
-if not os.path.isdir(save_dir):
-    os.mkdir(save_dir)
+
+# Delete existing files
+files = glob.glob(os.path.join(read_dir, '*.png'))
+for f in files:
+    os.remove(f)
 
 for pdf_file in os.listdir(read_dir):
     if len(pdf_file) < 5:

@@ -2,6 +2,7 @@ import os
 import shutil
 import sqlite3
 from PIL import Image
+import glob
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -11,6 +12,11 @@ db_dir = os.path.join(current_dir, 'database.db')
 
 if not os.path.isdir(save_dir):
     os.mkdir(save_dir)
+
+# Delete existing files
+files = glob.glob(os.path.join(save_dir, '*.png'))
+for f in files:
+    os.remove(f)
 
 conn = sqlite3.connect(db_dir)
 c = conn.cursor()
