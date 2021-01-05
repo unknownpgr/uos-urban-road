@@ -1,8 +1,8 @@
 import React from 'react';
-import api from '../../libs/api';
+import api from 'libs/api';
 import { Alert, Button } from 'react-bootstrap';
 import './cadViewer.scss';
-import AppContext from '../Context/AppContext';
+import AppContext from 'contexts/AppContext';
 import { inv } from 'mathjs';
 import { ClickMenu } from './ClickMenu';
 import { CalibrationInputForm } from './CalibrationInputForm';
@@ -15,14 +15,14 @@ import {
   projectV,
   px2cnv,
 } from './calibration';
-import { saveFile } from '../../libs/saveFile';
-import { mapDict, forDict } from '../../libs/dictUtil';
+import { saveFile } from 'libs/saveFile';
+import { mapDict, forDict } from 'libs/dictUtil';
 import {
   loadImage,
   drawBoxedText,
   drawMarker,
   TEXT_ALIGN,
-} from '../../libs/imageUtil';
+} from 'libs/imageUtil';
 
 const SENSOR_DATA_COLUMN = {
   date: 'Date',

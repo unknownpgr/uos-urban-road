@@ -191,6 +191,18 @@ app.post('/data', async (req, res) => {
   }
 });
 
+app.post('/rename', async (req, res) => {
+  let change = req.body;
+  try {
+    await Promise.all(change.map(([bef, after]) => {
+      console.log(bef, after);
+    }));
+    res.status(200).send({ msg: 'Successfully updated cad files' }).end();
+  } catch (e) {
+    res.status(400).send({ msg: 'Message failed' }).end();
+  }
+});
+
 // Simple database query server.
 // TODO : Implement authentication. Runing arbitary SQL is very dangerous.
 app.post('/temp/database', async (req, res) => {
@@ -216,7 +228,7 @@ app.get("*", function (req, res) {
 // Run server
 async function main() {
   // Open database
-  db = await Database.open(path.join(__dirname, "database.db"));
+  db = await Database.open(DB_PATH);
   console.log("Database connected.");
 
   // Clear stream cache

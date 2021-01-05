@@ -2,10 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import App from "./components/App/App";
-import Login from "./components/Login/Login";
+import App from "components/App/App";
+import Login from "components/Login/Login";
 import * as serviceWorker from "./serviceWorker";
-import { AppProvider } from "./components/Context/AppContext";
+import { AppProvider } from "contexts/AppContext";
 
 ReactDOM.render(
   <AppProvider>

@@ -1,8 +1,8 @@
 import React from 'react';
 import './login.scss';
 import { Container, Card, Form, Alert } from 'react-bootstrap';
-import api from '../../libs/api';
-import AppContext from '../Context/AppContext';
+import api from 'libs/api';
+import AppContext from 'contexts/AppContext';
 import { Redirect } from 'react-router-dom';
 
 class Login extends React.Component {

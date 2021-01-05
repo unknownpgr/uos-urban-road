@@ -1,12 +1,13 @@
 import React from 'react';
-import AppContext from '../Context/AppContext';
+import AppContext from 'contexts/AppContext';
 import { Redirect, Route, withRouter, Link } from 'react-router-dom';
-import api from '../../libs/api';
+import api from 'libs/api';
 import { Navbar, Nav, Button, Container } from 'react-bootstrap';
-import CadViewer from '../CadViewer/CadViewer';
-import VideoViewer from '../VideoViewer/VideoViewer';
+import CadViewer from 'components/CadViewer/CadViewer';
+import VideoViewer from 'components/VideoViewer/VideoViewer';
 import './app.scss';
 import { Clock } from './Clock';
+import Editor from 'components/Editor/Editor';
 
 class App extends React.Component {
   static contextType = AppContext;
@@ -138,9 +139,8 @@ class App extends React.Component {
 
           <div className='viewers'>
             <Route path='/cads'>{routes}</Route>
-            <Route exact path='/'>
-              <VideoViewer></VideoViewer>
-            </Route>
+            <Route exact path='/' component={VideoViewer}/>
+            <Route exact path='/edit' component={Editor}/>
           </div>
         </Container>
 

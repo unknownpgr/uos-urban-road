@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Form } from 'react-bootstrap';
-import api from '../../libs/api';
-import { loadImage } from '../../libs/imageUtil';
+import api from 'libs/api';
+import { loadImage } from 'libs/imageUtil';
 import VideoPlayer from './VideoPlayer/VideoPlayer';
 import './videoViewer.scss';
 
