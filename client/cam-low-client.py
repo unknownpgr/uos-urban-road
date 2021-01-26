@@ -8,7 +8,7 @@ SEND_INTERVAL_FAIL = 2  # unit : second
 IMG_WIDTH = 320
 IMG_HEIGHT = 240
 CAMERA_INDEXES = [1, 2, 3, 4]
-SERVER_URL = "http://api.road.urbanscience.uos.ac.kr/stream"
+SERVER_URL = "https://api.road.urbanscience.uos.ac.kr/stream"
 
 # Redirect stderr to log file to remove warning message
 sys.stderr = open('.\err.log', 'w')

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const host = 'http://api.road.urbanscience.uos.ac.kr';
+const host = 'https://api.road.urbanscience.uos.ac.kr';
 
 const api = {
   host,

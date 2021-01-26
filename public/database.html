@@ -29,7 +29,7 @@
                     view.value = ''
                 } else {
                     view.value += '> ' + text + '\n'
-                    let result = await fetch('http://api.road.urbanscience.uos.ac.kr/temp/database?hash=' + Date.now(), {
+                    let result = await fetch('https://api.road.urbanscience.uos.ac.kr/temp/database?hash=' + Date.now(), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

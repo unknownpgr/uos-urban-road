@@ -139,8 +139,8 @@ class App extends React.Component {
 
           <div className='viewers'>
             <Route path='/cads'>{routes}</Route>
-            <Route exact path='/' component={VideoViewer}/>
-            <Route exact path='/edit' component={Editor}/>
+            <Route exact path='/' component={VideoViewer} />
+            <Route exact path='/edit' component={Editor} />
           </div>
         </Container>
 
@@ -148,7 +148,7 @@ class App extends React.Component {
         <footer className='page-footer gray pt-4 h-25'>
           <div className='footer-copyright text-center py-4'>
             © 2020 Copyright :
-            <a href='http://urbanscience.uos.ac.kr/'>
+            <a href='https://urbanscience.uos.ac.kr/'>
               서울시립대학교 국제도시과학대학원
             </a>
           </div>

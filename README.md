@@ -2,7 +2,7 @@
 
 본 프로젝트는 한국도로공사의 토공 다짐도 자동화시스템의 원격 서버를 구축하는 것을 목표로 한다.
 
-- 페이지 주소 : http://road.urbanscience.uos.ac.kr/login
+- 페이지 주소 : https://road.urbanscience.uos.ac.kr/login
 
 ## 개발 목표
 
