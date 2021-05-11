@@ -19,6 +19,7 @@ if(len(sys.argv) > 1):
         CAMERA_INDEXES = CAMERA_INDEXES[:4]
 
 print('Used camera :', CAMERA_INDEXES)
+sys.stdout.flush()
 
 # Pre-allocate arrays
 img_concat = np.zeros((IMG_HEIGHT*len(CAMERA_INDEXES), IMG_WIDTH, 3))
@@ -56,10 +57,14 @@ while True:
     except Exception as e:
         # If image transmission failed, try after SEND_INTERVAL_FAIL ms.
         print(f"Streamimg failed. Retry after {SEND_INTERVAL_FAIL}s...")
+        sys.stdout.flush()
+
         time.sleep(SEND_INTERVAL_FAIL)
         print('Reason : ', e)
+        sys.stdout.flush()
 
     except KeyboardInterrupt:
         # If CTRL+C pressed, break the loop
         print('Shutdow client')
+        sys.stdout.flush()
         break

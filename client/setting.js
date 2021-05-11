@@ -32,5 +32,5 @@ module.exports = {
      */
     log_sensor: true,
     log_gps: true,
-    log_camera: true,
+    log_camera: false,
 }
