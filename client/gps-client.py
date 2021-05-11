@@ -21,21 +21,28 @@ def parse_pos(pos_string, int_part):
     return degree+minute/60
 
 
+# GPS 데이터가 아니라 다른 시리얼(e.g. LWD)에 연결돼있어서 사용하면 안 되는 포트들의 목록
+banned_ports = []
+
 with open("gps-client.log", "a") as log:
     while True:
         try:
             # Detect available ports
             while True:
-                ports = list(
-                    map(lambda x: x[0], serial.tools.list_ports.comports()))
+
+                ports = serial.tools.list_ports.comports()
+                ports = list(map(lambda x: x[0], ports))
+                ports = list(filter(lambda x: x not in banned_ports, ports))
+
                 if len(ports) > 0:
-                    port_to_use = ports[0]
+                    port_gps = ports[0]
                     serial_port = serial.Serial(
-                        port=port_to_use, baudrate=BAUD_RATE)
+                        port=port_gps, baudrate=BAUD_RATE)
                     break
                 else:
                     print("No available COM port detected.")
-                    time.sleep(3)
+                    print("Banned ports :", banned_ports)
+                    time.sleep(5)
 
             # Read GPS signal
             while True:
@@ -43,7 +50,18 @@ with open("gps-client.log", "a") as log:
                     .readline()\
                     .decode('ASCII')\
                     .replace("\n", "")\
-                    .replace("\r", '')
+                    .replace("\r", '')\
+                    .strip()
+
+                # Skip empty string
+                if len(gps_string) == 0:
+                    continue
+
+                # Skip wrong ports
+                if not gps_string.startswith('$G'):
+                    banned_ports.append(port_gps)
+                    break
+
                 gps_params = gps_string.split(',')
                 gps_type = gps_params[0]
                 gps_lat = parse_pos(gps_params[2], 2)
