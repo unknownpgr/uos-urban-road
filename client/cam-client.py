@@ -1,6 +1,7 @@
 import cv2
 import requests
 import numpy as np
+import sys
 
 SEND_INTERVAL = 100  # ms
 SEND_INTERVAL_FAIL = 2000  # ms
@@ -8,6 +9,13 @@ IMG_WIDTH = 320
 IMG_HEIGHT = 240
 CAMERA_INDEXES = [1, 2, 3, 4]
 SERVER_URL = "https://api.road.urbanscience.uos.ac.kr/stream"
+
+if(len(sys.argv) > 1):
+    CAMERA_INDEXES = list(map(lambda x: int(x), sys.argv[1:]))
+    if len(CAMERA_INDEXES) > 4:
+        CAMERA_INDEXES = CAMERA_INDEXES[:4]
+
+print('Used camera :', CAMERA_INDEXES)
 
 # Create available camera dictinary
 cameras = {}
@@ -24,11 +32,13 @@ for i in range(len(CAMERA_INDEXES)):
             print(
                 f"Camera ratio and image ratio are different for camera {index}. cam={width/height},img={IMG_WIDTH/IMG_HEIGHT}")
             exit(1)
+        print("Got camera", index)
     else:
+        print("Could not get camera", index)
         cap.release()
 
 # Pre-allocate arrays
-img_concat = np.zeros((IMG_HEIGHT*len(CAMERA_INDEXES), IMG_WIDTH, 3))
+img_concat = np.zeros((IMG_HEIGHT*4, IMG_WIDTH, 3))
 img_empty = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3))
 
 while True:
